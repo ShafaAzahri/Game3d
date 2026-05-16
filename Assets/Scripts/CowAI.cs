@@ -6,8 +6,18 @@ public class CowAI : MonoBehaviour
 
     [Header("Movement")]
     public float moveSpeed = 1.5f;
-    public float moveRadius = 3f; // radius kandang
-    public float stopDistance = 0.2f;
+    public float moveRadius = 5f;
+    public float stopDistance = 0.3f;
+    public float rotationSpeed = 5f;
+
+    [Header("Obstacle Detection")]
+    public LayerMask obstacleLayer;
+    public float obstacleCheckDistance = 1.2f;
+
+    [Header("Cow Avoidance")]
+    public LayerMask cowLayer;
+    public float avoidDistance = 1.5f;
+    public float avoidForce = 2f;
 
     [Header("Timing")]
     public float minActionTime = 3f;
@@ -24,7 +34,9 @@ public class CowAI : MonoBehaviour
     void Start()
     {
         startPosition = transform.position;
+
         SetNextAction();
+        ChooseAction();
     }
 
     void Update()
@@ -47,30 +59,33 @@ public class CowAI : MonoBehaviour
     {
         int action = Random.Range(0, 3);
 
-        // 0 = idle, 1 = idle variation, 2 = jalan
-        if (action == 0)
+        switch (action)
         {
-            Idle();
-        }
-        else if (action == 1)
-        {
-            IdleVariation();
-        }
-        else
-        {
-            Walk();
+            case 0:
+                Idle();
+                break;
+
+            case 1:
+                IdleVariation();
+                break;
+
+            case 2:
+                Walk();
+                break;
         }
     }
 
     void Idle()
     {
         isMoving = false;
+
         animator.SetFloat("speed", 0f);
     }
 
     void IdleVariation()
     {
         isMoving = false;
+
         animator.SetFloat("speed", 0f);
         animator.SetTrigger("idleVariant");
     }
@@ -78,27 +93,129 @@ public class CowAI : MonoBehaviour
     void Walk()
     {
         isMoving = true;
+
         animator.SetFloat("speed", 1f);
 
-        Vector2 randomCircle = Random.insideUnitCircle * moveRadius;
-        targetPosition = startPosition + new Vector3(randomCircle.x, 0, randomCircle.y);
+        SetRandomTarget();
+    }
+
+    void SetRandomTarget()
+    {
+        for (int i = 0; i < 15; i++)
+        {
+            Vector2 randomCircle = Random.insideUnitCircle * moveRadius;
+
+            Vector3 candidateTarget =
+                startPosition +
+                new Vector3(randomCircle.x, 0, randomCircle.y);
+
+            Vector3 direction =
+                (candidateTarget - transform.position).normalized;
+
+            // CEK PAGAR / TEMBOK
+            bool hitObstacle = Physics.Raycast(
+                transform.position + Vector3.up * 0.5f,
+                direction,
+                obstacleCheckDistance,
+                obstacleLayer
+            );
+
+            if (!hitObstacle)
+            {
+                targetPosition = candidateTarget;
+                return;
+            }
+        }
+
+        // fallback
+        targetPosition = startPosition;
     }
 
     void MoveToTarget()
     {
-        Vector3 direction = (targetPosition - transform.position).normalized;
+        Vector3 direction =
+            (targetPosition - transform.position).normalized;
+
+        // =========================
+        // CEK PAGAR
+        // =========================
+
+        bool hitObstacle = Physics.Raycast(
+            transform.position + Vector3.up * 0.5f,
+            direction,
+            obstacleCheckDistance,
+            obstacleLayer
+        );
+
+        if (hitObstacle)
+        {
+            SetRandomTarget();
+            return;
+        }
+
+        // =========================
+        // AVOID SAPI LAIN
+        // =========================
+
+        Collider[] nearbyCows = Physics.OverlapSphere(
+            transform.position,
+            avoidDistance,
+            cowLayer
+        );
+
+        Vector3 avoidDirection = Vector3.zero;
+
+        foreach (Collider cow in nearbyCows)
+        {
+            if (cow.gameObject == gameObject)
+                continue;
+
+            Vector3 pushDir =
+                transform.position - cow.transform.position;
+
+            float distance =
+                Vector3.Distance(transform.position, cow.transform.position);
+
+            // makin dekat makin kuat dorongannya
+            float forceMultiplier = 1f / Mathf.Max(distance, 0.1f);
+
+            avoidDirection +=
+                pushDir.normalized * forceMultiplier;
+        }
+
+        direction += avoidDirection * avoidForce;
+
+        direction.Normalize();
+
+        // =========================
+        // ROTATE
+        // =========================
 
         if (direction != Vector3.zero)
         {
-            // Rotate ke arah jalan
-            Quaternion lookRotation = Quaternion.LookRotation(direction);
-            transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * 5f);
+            Quaternion lookRotation =
+                Quaternion.LookRotation(direction);
+
+            transform.rotation = Quaternion.Slerp(
+                transform.rotation,
+                lookRotation,
+                Time.deltaTime * rotationSpeed
+            );
         }
 
-        transform.position = Vector3.MoveTowards(transform.position, targetPosition, moveSpeed * Time.deltaTime);
+        // =========================
+        // MOVE
+        // =========================
 
-        // Sampai tujuan
-        if (Vector3.Distance(transform.position, targetPosition) < stopDistance)
+        transform.position +=
+            direction * moveSpeed * Time.deltaTime;
+
+        // =========================
+        // SAMPAI TUJUAN
+        // =========================
+
+        if (Vector3.Distance(transform.position, targetPosition)
+            <= stopDistance)
         {
             Idle();
         }
@@ -107,6 +224,39 @@ public class CowAI : MonoBehaviour
     void SetNextAction()
     {
         timer = 0;
-        currentActionTime = Random.Range(minActionTime, maxActionTime);
+
+        currentActionTime =
+            Random.Range(minActionTime, maxActionTime);
+    }
+
+    // =========================
+    // DEBUG GIZMOS
+    // =========================
+
+    void OnDrawGizmos()
+    {
+        if (!Application.isPlaying)
+            return;
+
+        // obstacle ray
+        Gizmos.color = Color.red;
+
+        Gizmos.DrawRay(
+            transform.position + Vector3.up * 0.5f,
+            transform.forward * obstacleCheckDistance
+        );
+
+        // avoidance radius
+        Gizmos.color = Color.yellow;
+
+        Gizmos.DrawWireSphere(
+            transform.position,
+            avoidDistance
+        );
+
+        // target
+        Gizmos.color = Color.green;
+
+        Gizmos.DrawSphere(targetPosition, 0.2f);
     }
 }
