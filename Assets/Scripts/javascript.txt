@@ -1,0 +1,1282 @@
+javascript
+
+const pptxgen = require("pptxgenjs");
+const React = require("react");
+const ReactDOMServer = require("react-dom/server");
+const sharp = require("sharp");
+const { FaMicrochip, FaCogs, FaChartBar, FaClock, FaCode, FaExclamationTriangle, FaCheckCircle, FaRobot, FaWaveSquare, FaLayerGroup, FaBolt, FaListAlt } = require("react-icons/fa");
+const { MdSpeed, MdMemory, MdTimeline } = require("react-icons/md");
+
+async function renderIcon(IconComponent, color = "#000000", size = 256) {
+  const svg = ReactDOMServer.renderToStaticMarkup(
+    React.createElement(IconComponent, { color, size: String(size) })
+  );
+  const pngBuffer = await sharp(Buffer.from(svg)).png().toBuffer();
+  return "image/png;base64," + pngBuffer.toString("base64");
+}
+
+// Color palette: Clean Light Tech Theme
+// White/cream bg, Dark navy text, Teal accent, Orange highlight
+const C = {
+  bg: "FFFFFF",
+  bgSlide: "F7F9FC",
+  navy: "1A2E4A",
+  teal: "0D9488",
+  tealLight: "CCFBF1",
+  orange: "EA580C",
+  orangeLight: "FFF7ED",
+  slate: "475569",
+  slateLight: "F1F5F9",
+  white: "FFFFFF",
+  gray: "94A3B8",
+  grayLight: "E2E8F0",
+  codeBlock: "1E293B",
+  codeText: "7DD3FC",
+};
+
+async function makeSlide(pres, bgColor = C.bgSlide) {
+  const slide = pres.addSlide();
+  slide.background = { color: bgColor };
+  return slide;
+}
+
+function addTitle(slide, text, y = 0.28, color = C.navy) {
+  slide.addText(text, {
+    x: 0.5, y: y, w: 9.0, h: 0.55,
+    fontSize: 22, bold: true, color: color,
+    fontFace: "Calibri", align: "left", margin: 0,
+  });
+  // Accent dot
+  slide.addShape("rect", {
+    x: 0.5, y: y + 0.62, w: 0.35, h: 0.07,
+    fill: { color: C.teal }, line: { type: "none" }
+  });
+}
+
+function addSubTitle(slide, text, x = 0.5, y = 1.0, w = 9.0, h = 0.35, color = C.slate) {
+  slide.addText(text, {
+    x, y, w, h,
+    fontSize: 13, color: color,
+    fontFace: "Calibri", align: "left", italic: true,
+  });
+}
+
+function addSpeakerNotes(slide, notes) {
+  slide.addNotes(notes);
+}
+
+function makeCodeBox(slide, code, x, y, w, h) {
+  slide.addShape("rect", {
+    x, y, w, h,
+    fill: { color: C.codeBlock }, line: { type: "none" },
+    rectRadius: 0.06
+  });
+  slide.addText(code, {
+    x: x + 0.12, y: y + 0.1, w: w - 0.24, h: h - 0.2,
+    fontSize: 9, fontFace: "Consolas", color: C.codeText,
+    align: "left", valign: "top", margin: 0,
+  });
+}
+
+function cardBox(slide, x, y, w, h, accentColor = C.teal) {
+  // Shadow
+  slide.addShape("rect", {
+    x: x + 0.04, y: y + 0.04, w, h,
+    fill: { color: "CBD5E1", transparency: 50 }, line: { type: "none" }
+  });
+  // White card
+  slide.addShape("rect", {
+    x, y, w, h,
+    fill: { color: C.white }, line: { color: C.grayLight, pt: 1 }
+  });
+  // Left accent
+  slide.addShape("rect", {
+    x, y, w: 0.07, h,
+    fill: { color: accentColor }, line: { type: "none" }
+  });
+}
+
+async function main() {
+  const pres = new pptxgen();
+  pres.layout = "LAYOUT_16x9";
+  pres.title = "Feasibility Test - Real-Time Systems";
+
+  // ──────────────────────────────────────
+  // SLIDE 0: TITLE
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres, C.bg);
+
+    // Top teal band
+    slide.addShape("rect", {
+      x: 0, y: 0, w: 10, h: 1.55,
+      fill: { color: C.navy }, line: { type: "none" }
+    });
+
+    // Robot icon area
+    const robotIcon = await renderIcon(FaRobot, "#0D9488", 512);
+    slide.addImage({ data: robotIcon, x: 8.3, y: 0.1, w: 1.4, h: 1.4 });
+
+    slide.addText("MINGGU 9 · P25", {
+      x: 0.5, y: 0.12, w: 7.5, h: 0.4,
+      fontSize: 11, fontFace: "Calibri", color: "7DD3FC", bold: false, align: "left", margin: 0
+    });
+    slide.addText("Feasibility Test", {
+      x: 0.5, y: 0.52, w: 7.6, h: 0.75,
+      fontSize: 36, fontFace: "Calibri", bold: true, color: C.white, align: "left", margin: 0
+    });
+    slide.addText("pada Real-Time Embedded Systems", {
+      x: 0.5, y: 1.22, w: 7.5, h: 0.35,
+      fontSize: 14, fontFace: "Calibri", color: "CBD5E1", align: "left", margin: 0
+    });
+
+    // Studi kasus badge
+    slide.addShape("rect", {
+      x: 0.5, y: 1.7, w: 4.2, h: 0.44,
+      fill: { color: C.tealLight }, line: { color: C.teal, pt: 1 }
+    });
+    slide.addText("Studi Kasus: Robot Line Follower (Arduino/ESP32 · C++)", {
+      x: 0.5, y: 1.7, w: 4.2, h: 0.44,
+      fontSize: 10, fontFace: "Calibri", color: C.teal, bold: true, align: "center", margin: 0
+    });
+
+    // Kelompok label
+    slide.addText("Kelompok 3 · Real-Time Systems", {
+      x: 0.5, y: 2.3, w: 5, h: 0.3,
+      fontSize: 11, fontFace: "Calibri", color: C.slate, italic: true, align: "left", margin: 0
+    });
+
+    // Members grid (2x4)
+    const members = [
+      "Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4",
+      "Anggota 5", "Anggota 6", "Anggota 7", "Anggota 8"
+    ];
+    const roles = [
+      "Pengantar", "Parameter & Pemodelan", "CPU Utilization", "Loop Predictable & Benchmarking",
+      "Kode C++", "Tantangan Lapangan", "Interrupt Latency", "Kesimpulan"
+    ];
+    for (let i = 0; i < 8; i++) {
+      const col = i % 4;
+      const row = Math.floor(i / 4);
+      const cx = 0.5 + col * 2.35;
+      const cy = 2.85 + row * 1.18;
+      slide.addShape("rect", {
+        x: cx, y: cy, w: 2.2, h: 0.95,
+        fill: { color: C.slateLight }, line: { color: C.grayLight, pt: 1 }
+      });
+      slide.addShape("rect", {
+        x: cx, y: cy, w: 2.2, h: 0.1,
+        fill: { color: i < 4 ? C.teal : C.orange }, line: { type: "none" }
+      });
+      slide.addText(members[i], {
+        x: cx, y: cy + 0.14, w: 2.2, h: 0.3,
+        fontSize: 12, fontFace: "Calibri", bold: true, color: C.navy, align: "center", margin: 0
+      });
+      slide.addText(roles[i], {
+        x: cx, y: cy + 0.48, w: 2.2, h: 0.38,
+        fontSize: 8.5, fontFace: "Calibri", color: C.slate, align: "center", margin: 0
+      });
+    }
+
+    addSpeakerNotes(slide, `Pembuka presentasi Kelompok 3 tentang Feasibility Test pada Real-Time Systems dengan studi kasus Robot Line Follower berbasis Arduino/ESP32. Kenalkan semua anggota kelompok sebelum masuk ke materi inti.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 1: Pengantar Feasibility Test
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Pengantar: Feasibility Test pada Robot Line Follower");
+    addSubTitle(slide, "Anggota 1 · Mengapa keberterimaan waktu itu penting?");
+
+    const robotIcon = await renderIcon(FaRobot, "#0D9488", 256);
+    slide.addImage({ data: robotIcon, x: 8.4, y: 0.15, w: 1.1, h: 1.1 });
+
+    // Intro paragraph
+    slide.addText(
+      "Sebuah Robot Line Follower bukan sekadar sistem mekanik — ia adalah sistem komputer waktu-nyata (real-time) yang harus merespons dunia fisik dalam batas waktu ketat. Jika program terlambat membaca sensor atau menghitung koreksi arah, robot akan keluar jalur. Di sinilah Feasibility Test berperan.",
+      {
+        x: 0.5, y: 1.1, w: 9, h: 0.82,
+        fontSize: 12, fontFace: "Calibri", color: C.navy, align: "left", margin: 0
+      }
+    );
+
+    // 3 cards
+    const cards = [
+      { title: "Apa itu Feasibility Test?", body: "Proses analisis matematis untuk membuktikan bahwa sekumpulan task real-time DAPAT diselesaikan sebelum deadline-nya masing-masing, menggunakan algoritma penjadwal tertentu.", color: C.teal },
+      { title: "Kenapa Penting?", body: "Tanpa uji kelayakan, kita hanya bisa berharap sistem berjalan benar. Feasibility Test mengubah harapan menjadi jaminan formal bahwa robot akan stabil di semua kondisi lintasan.", color: C.orange },
+      { title: "Konteks Arduino/ESP32", body: "Mikrokontroler tanpa OS real-time membutuhkan desain loop yang cermat. Feasibility Test membantu kita merancang timing loop() agar semua tugas kritis selesai tepat waktu.", color: "2563EB" },
+    ];
+
+    for (let i = 0; i < 3; i++) {
+      const cx = 0.5 + i * 3.08;
+      cardBox(slide, cx, 2.08, 2.9, 2.65, cards[i].color);
+      slide.addText(cards[i].title, {
+        x: cx + 0.18, y: 2.13, w: 2.6, h: 0.36,
+        fontSize: 11, fontFace: "Calibri", bold: true, color: cards[i].color, align: "left", margin: 0
+      });
+      slide.addText(cards[i].body, {
+        x: cx + 0.18, y: 2.54, w: 2.6, h: 1.9,
+        fontSize: 10, fontFace: "Calibri", color: C.slate, align: "left", margin: 0
+      });
+    }
+
+    // Timeline bottom
+    slide.addShape("rect", {
+      x: 0.5, y: 4.92, w: 9.0, h: 0.52,
+      fill: { color: C.tealLight }, line: { type: "none" }
+    });
+    slide.addText("Alur Presentasi: Parameter → Pemodelan → Evaluasi CPU → Desain Loop → Kode → Tantangan → Kesimpulan", {
+      x: 0.5, y: 4.92, w: 9.0, h: 0.52,
+      fontSize: 9.5, fontFace: "Calibri", color: C.teal, bold: true, align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Slide ini membuka perspektif mengapa robot line follower adalah sistem real-time. Tekankan bahwa "real-time" bukan berarti cepat, tetapi tepat waktu. Feasibility Test bukan opsional — ini adalah fondasi desain. Jelaskan bahwa Arduino/ESP32 tidak memiliki OS real-time bawaan, sehingga programmer harus secara manual memastikan semua task selesai sebelum deadline.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 2: Parameter Kritis
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Parameter Kritis: WCET, Deadline, dan Period");
+    addSubTitle(slide, "Anggota 2 (1/2) · Tiga pilar analisis real-time");
+
+    const clockIcon = await renderIcon(FaClock, "#EA580C", 256);
+    slide.addImage({ data: clockIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Parameter cards
+    const params = [
+      {
+        name: "WCET", full: "Worst-Case Execution Time",
+        desc: "Batas atas waktu eksekusi suatu task dalam kondisi paling buruk yang mungkin terjadi. Untuk pembacaan sensor garis, WCET mencakup delay ADC, noise filtering, dan transfer data. WCET diukur secara empiris menggunakan micros().",
+        formula: "WCET ≥ max(semua eksekusi aktual task)",
+        color: C.teal, val: "~800 µs"
+      },
+      {
+        name: "Deadline", full: "Batas Waktu Respons",
+        desc: "Waktu maksimum sejak task diaktifkan hingga harus selesai. Pada robot line follower, deadline pembacaan sensor ~10ms. Jika terlewat (deadline miss), robot akan bergerak berdasarkan data lama dan kehilangan jalur.",
+        formula: "D ≤ T (Implicit Deadline)",
+        color: C.orange, val: "≤ 10 ms"
+      },
+      {
+        name: "Period (T)", full: "Interval Pengaktifan Task",
+        desc: "Interval waktu antara dua pengaktifan berturut-turut suatu periodik task. Period ditentukan oleh kebutuhan kontrol: PID loop membutuhkan eksekusi lebih sering dibanding aktuator motor untuk respons yang halus.",
+        formula: "T = waktu antar aktivasi berulang",
+        color: "2563EB", val: "10–50 ms"
+      },
+    ];
+
+    for (let i = 0; i < 3; i++) {
+      const cx = 0.5 + i * 3.08;
+      const cy = 1.15;
+      // Card bg
+      slide.addShape("rect", {
+        x: cx, y: cy, w: 2.9, h: 3.45,
+        fill: { color: C.white }, line: { color: C.grayLight, pt: 1 }
+      });
+      // Top accent
+      slide.addShape("rect", {
+        x: cx, y: cy, w: 2.9, h: 0.5,
+        fill: { color: params[i].color }, line: { type: "none" }
+      });
+      // Name
+      slide.addText(params[i].name, {
+        x: cx + 0.1, y: cy + 0.08, w: 1.8, h: 0.35,
+        fontSize: 18, fontFace: "Calibri", bold: true, color: C.white, margin: 0
+      });
+      slide.addText(params[i].val, {
+        x: cx + 1.7, y: cy + 0.08, w: 1.1, h: 0.35,
+        fontSize: 13, fontFace: "Calibri", bold: true, color: "FBBF24", align: "right", margin: 0
+      });
+      // Full name
+      slide.addText(params[i].full, {
+        x: cx + 0.1, y: cy + 0.56, w: 2.7, h: 0.3,
+        fontSize: 9.5, fontFace: "Calibri", bold: true, color: params[i].color, margin: 0
+      });
+      // Desc
+      slide.addText(params[i].desc, {
+        x: cx + 0.1, y: cy + 0.9, w: 2.7, h: 1.58,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0, align: "left"
+      });
+      // Formula
+      slide.addShape("rect", {
+        x: cx + 0.1, y: cy + 2.55, w: 2.7, h: 0.45,
+        fill: { color: C.slateLight }, line: { type: "none" }
+      });
+      slide.addText(params[i].formula, {
+        x: cx + 0.1, y: cy + 2.55, w: 2.7, h: 0.45,
+        fontSize: 9, fontFace: "Consolas", color: params[i].color, bold: true, align: "center", margin: 0
+      });
+    }
+
+    // Summary bar
+    slide.addShape("rect", {
+      x: 0.5, y: 4.77, w: 9.0, h: 0.52,
+      fill: { color: C.navy }, line: { type: "none" }
+    });
+    slide.addText("Prinsip Inti: Task feasible jika WCET < Deadline ≤ Period untuk setiap task dalam sistem", {
+      x: 0.5, y: 4.77, w: 9.0, h: 0.52,
+      fontSize: 10.5, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Jelaskan ketiga parameter dengan analogi yang mudah dipahami. WCET seperti "perkiraan waktu terburuk untuk suatu pekerjaan." Deadline adalah "jam berapa pekerjaan itu harus selesai." Period adalah "seberapa sering pekerjaan itu harus dilakukan." Tekankan bahwa nilai-nilai ini untuk robot line follower nyata: WCET sensor ~800µs, deadline 10ms, dan period 10-50ms tergantung task.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 3: Pemodelan Tugas
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Pemodelan Tugas: Sensor Garis, PID, Aktuator Motor");
+    addSubTitle(slide, "Anggota 2 (2/2) · Dekomposisi sistem menjadi task terukur");
+
+    const cogsIcon = await renderIcon(FaCogs, "#0D9488", 256);
+    slide.addImage({ data: cogsIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Task table
+    const tasks = [
+      ["τ₁ Baca Sensor Garis", "10 ms", "~800 µs", "10 ms", "Membaca nilai ADC dari 5 sensor IR, normalisasi, dan hitung posisi garis."],
+      ["τ₂ Kalkulasi PID", "10 ms", "~1.2 ms", "10 ms", "Menghitung error posisi, lalu P, I, D correction untuk perintah motor."],
+      ["τ₃ Aktuator Motor", "20 ms", "~300 µs", "20 ms", "Menulis nilai PWM ke pin motor kiri & kanan berdasarkan output PID."],
+      ["τ₄ Comm/Monitor", "100 ms", "~500 µs", "100 ms", "Opsional: kirim data debug via Serial untuk monitoring kondisi robot."],
+    ];
+
+    const colWidths = [2.5, 0.85, 1.0, 0.85, 3.6];
+    const headers = ["Task", "Period (T)", "WCET (Ci)", "Deadline (Di)", "Deskripsi Singkat"];
+
+    // Header row
+    let startX = 0.4;
+    for (let c = 0; c < headers.length; c++) {
+      slide.addShape("rect", {
+        x: startX, y: 1.1, w: colWidths[c], h: 0.4,
+        fill: { color: C.navy }, line: { type: "none" }
+      });
+      slide.addText(headers[c], {
+        x: startX + 0.05, y: 1.1, w: colWidths[c] - 0.1, h: 0.4,
+        fontSize: 9, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+      });
+      startX += colWidths[c] + 0.05;
+    }
+
+    const rowColors = [C.tealLight, C.white, C.orangeLight, C.white];
+    for (let r = 0; r < tasks.length; r++) {
+      startX = 0.4;
+      for (let c = 0; c < colWidths.length; c++) {
+        slide.addShape("rect", {
+          x: startX, y: 1.55 + r * 0.62, w: colWidths[c], h: 0.58,
+          fill: { color: rowColors[r] }, line: { color: C.grayLight, pt: 0.75 }
+        });
+        slide.addText(tasks[r][c], {
+          x: startX + 0.06, y: 1.57 + r * 0.62, w: colWidths[c] - 0.12, h: 0.54,
+          fontSize: c === 0 ? 9.5 : 9, fontFace: c === 0 ? "Calibri" : "Calibri",
+          bold: c === 0, color: c === 0 ? C.navy : C.slate, align: c >= 1 && c <= 3 ? "center" : "left", margin: 0
+        });
+        startX += colWidths[c] + 0.05;
+      }
+    }
+
+    // Flow arrows
+    slide.addText("Alur Eksekusi Satu Siklus (Period 10ms):", {
+      x: 0.4, y: 4.15, w: 9, h: 0.28,
+      fontSize: 10, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+
+    const steps = ["τ₁ Baca Sensor\n0–0.8ms", "τ₂ Kalkulasi PID\n0.8–2.0ms", "τ₃ Aktuator\n2.0–2.3ms", "Idle / Wait\n2.3–10ms"];
+    const stepColors = [C.teal, C.orange, "2563EB", C.grayLight];
+    const stepTextColors = [C.white, C.white, C.white, C.slate];
+    for (let i = 0; i < steps.length; i++) {
+      slide.addShape("rect", {
+        x: 0.4 + i * 2.35, y: 4.5, w: 2.2, h: 0.75,
+        fill: { color: stepColors[i] }, line: { type: "none" }
+      });
+      slide.addText(steps[i], {
+        x: 0.4 + i * 2.35, y: 4.5, w: 2.2, h: 0.75,
+        fontSize: 9, fontFace: "Calibri", bold: i < 3, color: stepTextColors[i], align: "center", margin: 0
+      });
+      if (i < 3) {
+        slide.addShape("rect", {
+          x: 0.4 + i * 2.35 + 2.2, y: 4.78, w: 0.15, h: 0.2,
+          fill: { color: C.navy }, line: { type: "none" }
+        });
+      }
+    }
+
+    addSpeakerNotes(slide, `Slide ini mendefinisikan task model secara konkret. Setiap task memiliki period, WCET, dan deadline yang terukur. Jelaskan bahwa τ₁ (sensor) dan τ₂ (PID) harus berjalan setiap 10ms untuk respons yang smooth. τ₃ motor berjalan setiap 20ms karena motor lebih lambat merespons. Tunjukkan alur eksekusi di bawah — dalam satu periode 10ms, semua task utama selesai di 2.3ms, sisanya adalah idle time yang menjadi buffer keamanan.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 4: CPU Utilization
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Metode Evaluasi: Analisis CPU Utilization");
+    addSubTitle(slide, "Anggota 3 · Rumus dasar dan interpretasi");
+
+    const chartIcon = await renderIcon(FaChartBar, "#0D9488", 256);
+    slide.addImage({ data: chartIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Left column: explanation
+    slide.addText("Apa itu CPU Utilization (U)?", {
+      x: 0.5, y: 1.05, w: 4.5, h: 0.32,
+      fontSize: 12, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    slide.addText(
+      "CPU Utilization (U) mengukur persentase waktu prosesor yang digunakan oleh seluruh task real-time. Nilai U menentukan apakah sistem layak (feasible) dijalankan pada prosesor yang ada, atau apakah ada risiko task melewati deadline.",
+      {
+        x: 0.5, y: 1.42, w: 4.6, h: 0.88,
+        fontSize: 11, fontFace: "Calibri", color: C.slate, margin: 0
+      }
+    );
+
+    // Formula box
+    slide.addShape("rect", {
+      x: 0.5, y: 2.42, w: 4.6, h: 1.3,
+      fill: { color: C.navy }, line: { type: "none" }
+    });
+    slide.addText("Rumus Liu & Layland (1973):", {
+      x: 0.6, y: 2.5, w: 4.4, h: 0.3,
+      fontSize: 10, fontFace: "Calibri", color: "7DD3FC", bold: true, margin: 0
+    });
+    slide.addText("U = Σ (Ci / Ti)  ≤  n(2^(1/n) − 1)", {
+      x: 0.6, y: 2.84, w: 4.4, h: 0.45,
+      fontSize: 16, fontFace: "Consolas", color: C.white, bold: true, align: "center", margin: 0
+    });
+    slide.addText("n = jumlah task  |  Ci = WCET  |  Ti = Period", {
+      x: 0.6, y: 3.32, w: 4.4, h: 0.28,
+      fontSize: 9.5, fontFace: "Calibri", color: C.gray, align: "center", margin: 0
+    });
+
+    // Interpretation thresholds
+    slide.addText("Interpretasi Nilai U:", {
+      x: 0.5, y: 3.9, w: 4.5, h: 0.28,
+      fontSize: 11, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const thresholds = [
+      { range: "U < 69.3%", label: "Guaranteed Feasible (RMS)", color: "16A34A" },
+      { range: "69.3% ≤ U < 100%", label: "Mungkin feasible, perlu analisis lanjut", color: C.orange },
+      { range: "U ≥ 100%", label: "Pasti TIDAK feasible — overload!", color: "DC2626" },
+    ];
+    for (let i = 0; i < thresholds.length; i++) {
+      slide.addShape("rect", { x: 0.5, y: 4.25 + i * 0.4, w: 0.2, h: 0.28, fill: { color: thresholds[i].color }, line: { type: "none" } });
+      slide.addText(`${thresholds[i].range}  →  ${thresholds[i].label}`, {
+        x: 0.76, y: 4.25 + i * 0.4, w: 4.2, h: 0.28,
+        fontSize: 10, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    // Right: Calculation example
+    slide.addShape("rect", {
+      x: 5.4, y: 1.05, w: 4.1, h: 4.15,
+      fill: { color: C.white }, line: { color: C.grayLight, pt: 1 }
+    });
+    slide.addShape("rect", { x: 5.4, y: 1.05, w: 4.1, h: 0.42, fill: { color: C.teal }, line: { type: "none" } });
+    slide.addText("Contoh Kalkulasi: Robot Line Follower", {
+      x: 5.45, y: 1.05, w: 4.0, h: 0.42,
+      fontSize: 10, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+
+    const calcRows = [
+      ["Task", "Ci", "Ti", "Ci/Ti"],
+      ["τ₁ Sensor", "0.8 ms", "10 ms", "0.080"],
+      ["τ₂ PID Calc", "1.2 ms", "10 ms", "0.120"],
+      ["τ₃ Motor", "0.3 ms", "20 ms", "0.015"],
+      ["τ₄ Serial", "0.5 ms", "100 ms", "0.005"],
+      ["TOTAL U", "", "", "0.220 = 22%"],
+    ];
+    const cW = [1.4, 0.7, 0.7, 1.0];
+    for (let r = 0; r < calcRows.length; r++) {
+      let startCx = 5.45;
+      const isHeader = r === 0;
+      const isTotal = r === 5;
+      for (let c = 0; c < cW.length; c++) {
+        slide.addShape("rect", {
+          x: startCx, y: 1.52 + r * 0.48, w: cW[c], h: 0.44,
+          fill: { color: isHeader ? C.slateLight : isTotal ? C.tealLight : (r % 2 === 0 ? "FAFAFA" : C.white) },
+          line: { color: C.grayLight, pt: 0.5 }
+        });
+        slide.addText(calcRows[r][c], {
+          x: startCx + 0.05, y: 1.52 + r * 0.48, w: cW[c] - 0.1, h: 0.44,
+          fontSize: isTotal ? 10 : 9.5, fontFace: isTotal ? "Consolas" : "Calibri",
+          bold: isHeader || isTotal, color: isTotal && c === 3 ? C.teal : C.navy, align: "center", margin: 0
+        });
+        startCx += cW[c];
+      }
+    }
+    slide.addText("U = 22% ≪ 69.3%  →  Sistem LAYAK ✓", {
+      x: 5.45, y: 4.44, w: 3.95, h: 0.4,
+      fontSize: 10.5, fontFace: "Calibri", bold: true, color: "16A34A", align: "center", margin: 0
+    });
+    slide.addText("Batas RMS untuk n=4: 2^(1/4)−1 × 4 ≈ 75.7%", {
+      x: 5.45, y: 4.86, w: 3.95, h: 0.28,
+      fontSize: 8.5, fontFace: "Calibri", color: C.gray, align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Jelaskan bahwa CPU Utilization adalah metode paling mudah untuk Feasibility Test pertama. Rumus Liu & Layland memberikan batas atas: jika U ≤ n(2^(1/n)-1), sistem pasti feasible di bawah Rate Monotonic Scheduling. Untuk n=4 task, batasnya ~75.7%. Contoh robot kita: U hanya 22%, jauh di bawah batas — sistem sangat feasible dan masih ada banyak kapasitas tersisa untuk task tambahan.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 5: Desain Loop Predictable
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Desain Loop C++ yang Predictable (Dapat Diprediksi)");
+    addSubTitle(slide, "Anggota 4 (1/2) · Prinsip timing loop yang deterministik");
+
+    const boltIcon = await renderIcon(FaBolt, "#EA580C", 256);
+    slide.addImage({ data: boltIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Intro
+    slide.addText(
+      "Loop yang predictable adalah fondasi real-time system pada mikrokontroler. Artinya setiap iterasi loop() memiliki durasi yang terukur, terbatas, dan konsisten — tidak bergantung pada kondisi eksternal yang tak terduga.",
+      {
+        x: 0.5, y: 1.08, w: 9, h: 0.55,
+        fontSize: 11.5, fontFace: "Calibri", color: C.slate, margin: 0
+      }
+    );
+
+    // Two-column layout
+    // Left: Principles
+    slide.addText("Prinsip Desain Loop Deterministik:", {
+      x: 0.5, y: 1.72, w: 4.5, h: 0.3,
+      fontSize: 11.5, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const principles = [
+      { icon: "①", text: "Gunakan timing-based dispatch: setiap task diaktifkan berdasarkan interval waktu (millis/micros), bukan event yang tidak pasti.", color: C.teal },
+      { icon: "②", text: "Hindari blocking calls: fungsi seperti delay() memblokir CPU dan merusak predictability semua task lainnya.", color: C.orange },
+      { icon: "③", text: "Batasi WCET setiap task: pastikan tidak ada path kode yang bisa berjalan tak terbatas (loop dalam yang bergantung data dinamis).", color: "2563EB" },
+      { icon: "④", text: "Non-blocking Serial & I2C: gunakan polling atau interrupt, bukan busy-wait, untuk komunikasi peripheral.", color: "7C3AED" },
+    ];
+    for (let i = 0; i < principles.length; i++) {
+      slide.addShape("rect", {
+        x: 0.5, y: 2.1 + i * 0.73, w: 0.34, h: 0.52,
+        fill: { color: principles[i].color }, line: { type: "none" }
+      });
+      slide.addText(principles[i].icon, {
+        x: 0.5, y: 2.1 + i * 0.73, w: 0.34, h: 0.52,
+        fontSize: 13, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+      });
+      slide.addText(principles[i].text, {
+        x: 0.9, y: 2.1 + i * 0.73, w: 4.1, h: 0.52,
+        fontSize: 10, fontFace: "Calibri", color: C.slate, margin: 0, align: "left"
+      });
+    }
+
+    // Right: Code snippet
+    slide.addText("Contoh Pola Loop Non-Blocking:", {
+      x: 5.4, y: 1.72, w: 4.1, h: 0.3,
+      fontSize: 11.5, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const codeSnippet = `unsigned long prevSensor = 0;
+unsigned long prevPID    = 0;
+unsigned long prevMotor  = 0;
+
+const uint32_t T_SENSOR = 10000; // 10ms
+const uint32_t T_PID    = 10000; // 10ms
+const uint32_t T_MOTOR  = 20000; // 20ms
+
+void loop() {
+  unsigned long now = micros();
+
+  if (now - prevSensor >= T_SENSOR) {
+    prevSensor = now;
+    readLineSensor(); // τ₁
+  }
+
+  if (now - prevPID >= T_PID) {
+    prevPID = now;
+    computePID();     // τ₂
+  }
+
+  if (now - prevMotor >= T_MOTOR) {
+    prevMotor = now;
+    driveMotors();    // τ₃
+  }
+}`;
+    makeCodeBox(slide, codeSnippet, 5.4, 2.08, 4.1, 3.17);
+
+    // Warning box
+    slide.addShape("rect", {
+      x: 0.5, y: 5.02, w: 9.0, h: 0.42,
+      fill: { color: C.orangeLight }, line: { color: C.orange, pt: 1 }
+    });
+    slide.addText("⚠  HINDARI: delay(10) dalam loop() — ini memblokir CPU selama 10ms dan membuat semua task lain terlambat!", {
+      x: 0.5, y: 5.02, w: 9.0, h: 0.42,
+      fontSize: 10, fontFace: "Calibri", color: C.orange, bold: true, align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Slide ini menjelaskan arsitektur loop yang benar untuk sistem real-time tanpa RTOS. Kunci utamanya adalah timing-based dispatch menggunakan micros(). Berbeda dari delay()-based loop yang memblokir CPU, pola ini memungkinkan semua task berjalan secara quasi-paralel dalam satu thread. Tunjukkan kode di kanan — pola "if (now - prev >= period)" adalah idiom standar Arduino real-time yang harus dihafal.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 6: millis() / micros() Benchmarking
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Penggunaan millis() dan micros() untuk Benchmarking");
+    addSubTitle(slide, "Anggota 4 (2/2) · Mengukur waktu eksekusi secara empiris");
+
+    const clockIcon = await renderIcon(MdTimeline, "#0D9488", 256);
+    slide.addImage({ data: clockIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Comparison cards
+    const funcs = [
+      { name: "millis()", res: "1 ms", range: "~49.7 hari", use: "Task dengan period panjang (>10ms): komunikasi Serial, LED status, mode idle monitoring.", color: C.teal },
+      { name: "micros()", res: "4 µs (Arduino Uno)\n1 µs (ESP32)", range: "~70 menit", use: "Benchmarking task cepat: sensor ADC, PID computation, motor PWM write. Cocok untuk WCET measurement.", color: C.orange },
+    ];
+    for (let i = 0; i < 2; i++) {
+      cardBox(slide, 0.4 + i * 4.7, 1.08, 4.55, 2.3, funcs[i].color);
+      slide.addText(funcs[i].name, {
+        x: 0.62 + i * 4.7, y: 1.12, w: 4.2, h: 0.48,
+        fontSize: 22, fontFace: "Consolas", bold: true, color: funcs[i].color, margin: 0
+      });
+      slide.addText([
+        { text: "Resolusi: ", options: { bold: true } },
+        { text: funcs[i].res + "\n" },
+        { text: "Overflow: ", options: { bold: true } },
+        { text: funcs[i].range + "\n\n" },
+        { text: "Kapan digunakan:\n", options: { bold: true } },
+        { text: funcs[i].use },
+      ], {
+        x: 0.62 + i * 4.7, y: 1.65, w: 4.1, h: 1.6,
+        fontSize: 10.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    // Code: Benchmarking pattern
+    slide.addText("Pola Standar Pengukuran WCET dengan micros():", {
+      x: 0.4, y: 3.5, w: 9, h: 0.3,
+      fontSize: 11.5, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const benchCode = `// Ukur WCET task secara akumulatif (jalankan >1000 iterasi)
+unsigned long maxDuration = 0;
+
+void measureWCET_PID() {
+  unsigned long t_start = micros();
+  
+  computePID();  // Fungsi yang diukur
+  
+  unsigned long duration = micros() - t_start;
+  if (duration > maxDuration) {
+    maxDuration = duration;  // Simpan nilai maksimum
+    Serial.print("New WCET: "); Serial.print(maxDuration);
+    Serial.println(" us");
+  }
+}`;
+    makeCodeBox(slide, benchCode, 0.4, 3.85, 5.5, 1.68);
+
+    // Notes panel
+    slide.addShape("rect", {
+      x: 6.05, y: 3.85, w: 3.5, h: 1.68,
+      fill: { color: C.tealLight }, line: { color: C.teal, pt: 1 }
+    });
+    slide.addText("Tips Pengukuran WCET Akurat:", {
+      x: 6.1, y: 3.9, w: 3.4, h: 0.3,
+      fontSize: 10, fontFace: "Calibri", bold: true, color: C.teal, margin: 0
+    });
+    const tips = [
+      "Jalankan minimal 1.000–10.000 iterasi",
+      "Uji di kondisi terburuk (noise sensor tinggi)",
+      "Tambahkan safety margin 20–30% ke WCET hasil ukur",
+      "Catat nilai maksimum, bukan rata-rata",
+    ];
+    slide.addText(tips.map((t, i) => `${i + 1}. ${t}`).join("\n"), {
+      x: 6.1, y: 4.26, w: 3.4, h: 1.2,
+      fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+    });
+
+    addSpeakerNotes(slide, `Slide ini adalah panduan praktis untuk mengukur WCET secara empiris di Arduino/ESP32. millis() cukup untuk task yang lambat, tetapi micros() wajib untuk mengukur eksekusi sub-milidetik seperti PID. Tekankan pentingnya mengukur WCET dalam kondisi terburuk — misal saat sensor menghadapi noise tinggi atau saat buffer serial penuh. Nilai WCET yang diukur harus ditambah safety margin sebelum digunakan dalam analisis feasibility.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 7: Kode C++: Mengukur Execution Time Sensor
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Kode C++: Mengukur Execution Time Pembacaan Sensor");
+    addSubTitle(slide, "Anggota 5 (1/2) · Implementasi benchmarking τ₁ pada Arduino/ESP32");
+
+    const codeIcon = await renderIcon(FaCode, "#0D9488", 256);
+    slide.addImage({ data: codeIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Main code block
+    const sensorCode = `// === WCET Measurement: τ₁ - Pembacaan Sensor Garis ===
+// Target Platform: Arduino Uno / ESP32
+
+const int SENSOR_PINS[] = {A0, A1, A2, A3, A4};
+const int NUM_SENSORS   = 5;
+const int DEADLINE_US   = 10000;  // Deadline τ₁ = 10 ms
+
+int  sensorValues[NUM_SENSORS];
+long weightedPos = 0;
+unsigned long wcet_sensor   = 0;  // Worst-case terpanjang
+unsigned long avg_sensor    = 0;
+unsigned long measureCount  = 0;
+
+void readLineSensor() {
+  unsigned long t_start = micros();  // ← Mulai stopwatch
+  
+  // Baca semua sensor IR
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    sensorValues[i] = analogRead(SENSOR_PINS[i]);
+  }
+  
+  // Hitung posisi garis (weighted average)
+  long sum = 0, total = 0;
+  for (int i = 0; i < NUM_SENSORS; i++) {
+    sum   += (long)sensorValues[i] * i * 1000;
+    total += sensorValues[i];
+  }
+  weightedPos = (total != 0) ? (sum / total) : 2000;
+
+  unsigned long duration = micros() - t_start;  // ← Hentikan
+
+  // Update WCET & rata-rata
+  if (duration > wcet_sensor) wcet_sensor = duration;
+  avg_sensor = (avg_sensor * measureCount + duration) / (measureCount + 1);
+  measureCount++;
+
+  // Deteksi Deadline Miss
+  if (duration > DEADLINE_US) {
+    Serial.print("[DEADLINE MISS] Sensor: ");
+    Serial.print(duration); Serial.println(" us!");
+  }
+}`;
+    makeCodeBox(slide, sensorCode, 0.4, 1.05, 5.75, 4.42);
+
+    // Right panel: explanation
+    slide.addShape("rect", {
+      x: 6.3, y: 1.05, w: 3.2, h: 4.42,
+      fill: { color: C.white }, line: { color: C.grayLight, pt: 1 }
+    });
+    slide.addShape("rect", { x: 6.3, y: 1.05, w: 3.2, h: 0.42, fill: { color: C.teal }, line: { type: "none" } });
+    slide.addText("Penjelasan Kode", {
+      x: 6.35, y: 1.05, w: 3.1, h: 0.42,
+      fontSize: 11, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+
+    const explains = [
+      { label: "micros() wrapping", text: "Mengapit fungsi target — satu panggilan sebelum, satu sesudah. Selisihnya adalah execution time aktual." },
+      { label: "WCET tracking", text: "Variabel wcet_sensor menyimpan nilai maksimum sepanjang runtime. Ini yang digunakan untuk analisis feasibility." },
+      { label: "Deadline check", text: "Jika duration > DEADLINE_US, kita tahu terjadi deadline miss. Ini sinyal kritis bahwa sistem bermasalah." },
+      { label: "Avg vs WCET", text: "Rata-rata saja tidak cukup untuk analisis real-time. Kita butuh nilai terburuk (WCET) untuk jaminan formal." },
+    ];
+    for (let i = 0; i < explains.length; i++) {
+      slide.addText(explains[i].label, {
+        x: 6.4, y: 1.56 + i * 0.88, w: 3.0, h: 0.26,
+        fontSize: 10, fontFace: "Calibri", bold: true, color: C.teal, margin: 0
+      });
+      slide.addText(explains[i].text, {
+        x: 6.4, y: 1.84 + i * 0.88, w: 3.0, h: 0.5,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    // Result example
+    slide.addShape("rect", {
+      x: 6.3, y: 4.58, w: 3.2, h: 0.55,
+      fill: { color: C.navy }, line: { type: "none" }
+    });
+    slide.addText("Output Serial Monitor:\nNew WCET: 812 us  (< 10.000 us ✓)", {
+      x: 6.35, y: 4.58, w: 3.1, h: 0.55,
+      fontSize: 9, fontFace: "Consolas", color: "7DD3FC", margin: 0, align: "center"
+    });
+
+    addSpeakerNotes(slide, `Ini adalah implementasi nyata pengukuran WCET untuk pembacaan sensor. Kode ini bisa langsung di-copy ke Arduino IDE. Jelaskan bahwa kita memasang "stopwatch digital" menggunakan micros() di awal dan akhir fungsi readLineSensor(). Yang penting bukan hanya mengukur, tapi juga membandingkan dengan deadline. Hasil 812µs jauh di bawah deadline 10.000µs, menunjukkan τ₁ aman. Tekankan juga pentingnya mengukur selama ratusan iterasi, bukan hanya sekali.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 8: Kode C++: PID Sesuai Deadline
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Kode C++: Memastikan Eksekusi PID Sesuai Deadline");
+    addSubTitle(slide, "Anggota 5 (2/2) · Implementasi guard deadline pada τ₂");
+
+    const codeIcon = await renderIcon(FaWaveSquare, "#EA580C", 256);
+    slide.addImage({ data: codeIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    const pidCode = `// === τ₂: Kalkulasi PID dengan Deadline Guard ===
+const float Kp = 0.5, Ki = 0.01, Kd = 0.2;
+const int   SETPOINT    = 2000;   // Tengah 5 sensor
+const int   DEADLINE_US = 10000;  // Deadline τ₂ = 10 ms
+const int   BASE_SPEED  = 150;
+
+float integral = 0, prevError = 0;
+int   motorLeft = 0, motorRight = 0;
+
+void computePID() {
+  unsigned long t_start = micros();  // ← Stopwatch mulai
+
+  // Hitung error posisi
+  float error = (float)(SETPOINT - weightedPos);
+
+  // Komponen PID
+  float P = Kp * error;
+  integral += error;
+  // Anti-windup: batasi integral
+  integral = constrain(integral, -5000, 5000);
+  float I = Ki * integral;
+  float D = Kd * (error - prevError);
+  prevError = error;
+
+  float correction = P + I + D;
+
+  // Terapkan koreksi ke kecepatan motor
+  motorLeft  = constrain(BASE_SPEED + correction, 0, 255);
+  motorRight = constrain(BASE_SPEED - correction, 0, 255);
+
+  unsigned long duration = micros() - t_start;  // ← Stopwatch berhenti
+  
+  // Deadline enforcement
+  if (duration > DEADLINE_US) {
+    integral  = 0;  // Reset integrator saat overrun
+    Serial.print("[MISS] PID: "); Serial.println(duration);
+  }
+}`;
+    makeCodeBox(slide, pidCode, 0.4, 1.05, 5.75, 4.42);
+
+    // Right: analysis boxes
+    slide.addText("Poin Kritis Implementasi:", {
+      x: 6.3, y: 1.05, w: 3.2, h: 0.3,
+      fontSize: 11, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+
+    const points = [
+      { title: "Anti-Windup Integrator", body: "integral = constrain(...) mencegah integrator PID meledak saat robot kehilangan garis. Ini juga membatasi WCET komputasi.", color: C.teal },
+      { title: "Failsafe pada Overrun", body: "Saat deadline miss terdeteksi, integrator di-reset agar robot tidak lanjut mengeksekusi koreksi yang sudah kadaluarsa.", color: C.orange },
+      { title: "constrain() sebagai Guard", body: "Membatasi nilai motor [0-255] sekaligus menjaga WCET: tidak ada loop infinite, hasilnya deterministik.", color: "2563EB" },
+    ];
+    for (let i = 0; i < points.length; i++) {
+      cardBox(slide, 6.3, 1.42 + i * 1.2, 3.2, 1.1, points[i].color);
+      slide.addText(points[i].title, {
+        x: 6.48, y: 1.46 + i * 1.2, w: 2.9, h: 0.28,
+        fontSize: 10, fontFace: "Calibri", bold: true, color: points[i].color, margin: 0
+      });
+      slide.addText(points[i].body, {
+        x: 6.48, y: 1.76 + i * 1.2, w: 2.9, h: 0.62,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    slide.addShape("rect", {
+      x: 6.3, y: 4.68, w: 3.2, h: 0.62,
+      fill: { color: C.navy }, line: { type: "none" }
+    });
+    slide.addText("WCET PID Terukur: ~1.150 µs\nDeadline: 10.000 µs  →  Margin: 88.5% ✓", {
+      x: 6.35, y: 4.68, w: 3.1, h: 0.62,
+      fontSize: 9, fontFace: "Consolas", color: "7DD3FC", align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Slide ini menunjukkan implementasi PID yang sekaligus aman untuk real-time system. Kunci utamanya adalah: (1) semua operasi matematika dalam computePID() memiliki batas eksekusi yang dapat diprediksi — tidak ada loop dinamis, (2) anti-windup melindungi dari kasus edge case yang bisa memperpanjang WCET, (3) failsafe saat deadline miss memastikan robot tidak mengeksekusi perintah basi. WCET PID ~1.15ms, jauh di bawah deadline 10ms.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 9: Overrun dan Jitter
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Tantangan Lapangan: Apa itu Overrun dan Jitter?");
+    addSubTitle(slide, "Anggota 6 (1/2) · Fenomena nyata yang mengancam kestabilan robot");
+
+    const warnIcon = await renderIcon(FaExclamationTriangle, "#EA580C", 256);
+    slide.addImage({ data: warnIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Two columns
+    // Left: Overrun
+    slide.addShape("rect", { x: 0.4, y: 1.05, w: 4.5, h: 0.44, fill: { color: "DC2626" }, line: { type: "none" } });
+    slide.addText("⛔  Overrun (Deadline Miss)", {
+      x: 0.4, y: 1.05, w: 4.5, h: 0.44,
+      fontSize: 12, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+    slide.addShape("rect", { x: 0.4, y: 1.52, w: 4.5, h: 2.32, fill: { color: C.white }, line: { color: C.grayLight, pt: 1 } });
+    slide.addText(
+      "Overrun terjadi ketika eksekusi suatu task melampaui deadline-nya. Dalam skenario robot line follower, ini berarti fungsi pembacaan sensor belum selesai ketika periode berikutnya dimulai.\n\nPenyebab umum:\n• Noise ADC menyebabkan rekalkulasi\n• Interrupt eksternal yang tidak diperkirakan\n• Operasi float yang terlalu panjang\n• Akses EEPROM atau Serial blocking\n\nDampak langsung: motor menerima perintah yang sudah kadaluarsa, robot bergerak berdasarkan data lama.",
+      {
+        x: 0.5, y: 1.58, w: 4.2, h: 2.2,
+        fontSize: 10, fontFace: "Calibri", color: C.slate, margin: 0
+      }
+    );
+
+    // Right: Jitter
+    slide.addShape("rect", { x: 5.1, y: 1.05, w: 4.5, h: 0.44, fill: { color: C.orange }, line: { type: "none" } });
+    slide.addText("⚡  Jitter (Ketidakstabilan Timing)", {
+      x: 5.1, y: 1.05, w: 4.5, h: 0.44,
+      fontSize: 12, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+    slide.addShape("rect", { x: 5.1, y: 1.52, w: 4.5, h: 2.32, fill: { color: C.white }, line: { color: C.grayLight, pt: 1 } });
+    slide.addText(
+      "Jitter adalah variasi (deviasi) dalam waktu eksekusi atau aktivasi task. Berbeda dari overrun, jitter bisa sangat kecil namun tetap merusak kualitas kontrol PID.\n\nPenyebab umum:\n• Interrupt service routine (ISR) yang berjalan di tengah task\n• Variasi beban CPU karena komunikasi Serial\n• Garbage collection (di sistem berbasis VM)\n• Clock drift pada timer internal\n\nDampak: PID menerima sample dengan interval tidak konsisten → tuning PID menjadi tidak stabil.",
+      {
+        x: 5.2, y: 1.58, w: 4.2, h: 2.2,
+        fontSize: 10, fontFace: "Calibri", color: C.slate, margin: 0
+      }
+    );
+
+    // Comparison visual
+    slide.addText("Visualisasi Perbedaan Timing:", {
+      x: 0.4, y: 4.0, w: 9, h: 0.3,
+      fontSize: 11, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+
+    // Timeline normal
+    slide.addText("Normal:", { x: 0.4, y: 4.35, w: 1.0, h: 0.24, fontSize: 9.5, fontFace: "Calibri", bold: true, color: "16A34A", margin: 0 });
+    for (let i = 0; i < 4; i++) {
+      slide.addShape("rect", { x: 1.45 + i * 1.95, y: 4.32, w: 1.5, h: 0.28, fill: { color: C.teal }, line: { type: "none" } });
+      slide.addText("Task", { x: 1.45 + i * 1.95, y: 4.32, w: 1.5, h: 0.28, fontSize: 8.5, fontFace: "Calibri", color: C.white, align: "center", margin: 0 });
+      if (i < 3) slide.addShape("rect", { x: 1.45 + i * 1.95 + 1.5, y: 4.40, w: 0.45, h: 0.12, fill: { color: C.grayLight }, line: { type: "none" } });
+    }
+
+    // Timeline jitter
+    slide.addText("Jitter:", { x: 0.4, y: 4.75, w: 1.0, h: 0.24, fontSize: 9.5, fontFace: "Calibri", bold: true, color: C.orange, margin: 0 });
+    const jitterWidths = [1.5, 1.7, 1.3, 1.6];
+    let jx = 1.45;
+    for (let i = 0; i < 4; i++) {
+      slide.addShape("rect", { x: jx, y: 4.72, w: jitterWidths[i], h: 0.28, fill: { color: C.orange }, line: { type: "none" } });
+      jx += jitterWidths[i] + 0.3;
+    }
+
+    // Timeline overrun
+    slide.addText("Overrun:", { x: 0.4, y: 5.1, w: 1.0, h: 0.24, fontSize: 9.5, fontFace: "Calibri", bold: true, color: "DC2626", margin: 0 });
+    slide.addShape("rect", { x: 1.45, y: 5.07, w: 1.5, h: 0.28, fill: { color: C.teal }, line: { type: "none" } });
+    slide.addShape("rect", { x: 2.95, y: 5.07, w: 1.3, h: 0.28, fill: { color: "DC2626" }, line: { type: "none" } });
+    slide.addText("MISS!", { x: 2.95, y: 5.07, w: 1.3, h: 0.28, fontSize: 8.5, fontFace: "Calibri", color: C.white, bold: true, align: "center", margin: 0 });
+    slide.addShape("rect", { x: 4.25, y: 5.07, w: 1.5, h: 0.28, fill: { color: C.teal }, line: { type: "none" } });
+    slide.addShape("rect", { x: 5.75, y: 5.07, w: 1.5, h: 0.28, fill: { color: C.teal }, line: { type: "none" } });
+
+    addSpeakerNotes(slide, `Slide ini mengangkat dua musuh utama sistem real-time di lapangan. Overrun adalah ketika task melewati deadline — ini adalah kegagalan serius. Jitter adalah ketidakstabilan timing — ini lebih halus tapi tetap berbahaya untuk kontrol PID. Gunakan visualisasi timeline di bawah untuk menjelaskan secara intuitif perbedaan keduanya. Tekankan bahwa Feasibility Test membantu mengidentifikasi risiko overrun sebelum robot dikompilasi.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 10: Dampak Kegagalan Feasibility
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Dampak Kegagalan Feasibility pada Kestabilan Robot");
+    addSubTitle(slide, "Anggota 6 (2/2) · Konsekuensi nyata dan strategi mitigasi");
+
+    const impactIcon = await renderIcon(FaLayerGroup, "#DC2626", 256);
+    slide.addImage({ data: impactIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Cascade failure chain
+    slide.addText("Rantai Kegagalan (Cascade Failure):", {
+      x: 0.4, y: 1.05, w: 9, h: 0.3,
+      fontSize: 12, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+
+    const chain = [
+      { step: "1", text: "CPU Overload\nU > 100%", color: "DC2626" },
+      { step: "→", text: "", color: "transparent" },
+      { step: "2", text: "Deadline Miss\nSensor/PID", color: C.orange },
+      { step: "→", text: "", color: "transparent" },
+      { step: "3", text: "Data Stale\nKontrol Lama", color: "D97706" },
+      { step: "→", text: "", color: "transparent" },
+      { step: "4", text: "Oscillasi\nMotor", color: "7C3AED" },
+      { step: "→", text: "", color: "transparent" },
+      { step: "5", text: "Robot Keluar\nJalur", color: C.navy },
+    ];
+
+    let cx = 0.35;
+    for (let i = 0; i < chain.length; i++) {
+      if (chain[i].step === "→") {
+        slide.addText("→", { x: cx, y: 1.45, w: 0.38, h: 0.7, fontSize: 18, fontFace: "Calibri", color: C.gray, align: "center", margin: 0 });
+        cx += 0.38;
+      } else {
+        slide.addShape("rect", { x: cx, y: 1.42, w: 1.45, h: 0.76, fill: { color: chain[i].color }, line: { type: "none" } });
+        slide.addText(chain[i].text, {
+          x: cx, y: 1.42, w: 1.45, h: 0.76,
+          fontSize: 9.5, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+        });
+        cx += 1.45;
+      }
+    }
+
+    // Three impact areas
+    const impacts = [
+      {
+        title: "Dampak pada Kontrol PID",
+        items: [
+          "Integrator windup: akumulasi error dari data sensor kadaluarsa",
+          "Tuning Kp/Ki/Kd menjadi tidak valid karena sample rate berubah",
+          "Oscillasi yang semakin besar sehingga robot tidak bisa lurus",
+        ],
+        color: "DC2626"
+      },
+      {
+        title: "Dampak pada Keamanan",
+        items: [
+          "Robot melampaui batas lintasan dan berpotensi jatuh dari meja",
+          "Tabrakan dengan obstacles yang tidak terdeteksi tepat waktu",
+          "Motor bergerak dengan sinyal yang tidak konsisten → aus lebih cepat",
+        ],
+        color: C.orange
+      },
+      {
+        title: "Strategi Mitigasi",
+        items: [
+          "Optimasi kode: kurangi WCET dengan menghindari operasi float yang mahal",
+          "Pisahkan task kritis ke ISR dengan prioritas tinggi",
+          "Gunakan RTOS (FreeRTOS/ESP32) untuk penjadwalan formal jika U mendekati 70%",
+        ],
+        color: C.teal
+      },
+    ];
+
+    for (let i = 0; i < 3; i++) {
+      cardBox(slide, 0.4 + i * 3.2, 2.32, 3.05, 2.88, impacts[i].color);
+      slide.addText(impacts[i].title, {
+        x: 0.6 + i * 3.2, y: 2.37, w: 2.7, h: 0.34,
+        fontSize: 10.5, fontFace: "Calibri", bold: true, color: impacts[i].color, margin: 0
+      });
+      slide.addText(impacts[i].items.map(it => `• ${it}`).join("\n\n"), {
+        x: 0.6 + i * 3.2, y: 2.78, w: 2.7, h: 2.3,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    addSpeakerNotes(slide, `Slide ini menunjukkan bahwa kegagalan feasibility bukan sekadar masalah teknis — ia memiliki konsekuensi nyata yang bisa dilihat di lapangan. Gunakan rantai kegagalan untuk menjelaskan mekanisme domino: dari CPU overload → deadline miss → data stale → oscillasi → robot keluar jalur. Tekankan tiga strategi mitigasi: optimasi kode (WCET), penggunaan ISR untuk task kritis, dan migrasi ke RTOS jika sistem semakin kompleks.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 11: Interrupt Latency
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Pengaruh Interrupt Latency Terhadap Waktu Komputasi");
+    addSubTitle(slide, "Anggota 7 · ISR sebagai sumber ketidakpastian WCET");
+
+    const memIcon = await renderIcon(FaMicrochip, "#0D9488", 256);
+    slide.addImage({ data: memIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    // Left: Explanation
+    slide.addText("Apa itu Interrupt Latency?", {
+      x: 0.4, y: 1.05, w: 4.6, h: 0.3,
+      fontSize: 12, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    slide.addText(
+      "Interrupt Latency adalah waktu antara saat sebuah interrupt request diterima oleh prosesor hingga ISR (Interrupt Service Routine) pertama kali dieksekusi. Selama jeda ini, task yang sedang berjalan dihentikan sementara, konteks di-save, dan CPU berpindah ke ISR.",
+      {
+        x: 0.4, y: 1.42, w: 4.6, h: 0.85,
+        fontSize: 11, fontFace: "Calibri", color: C.slate, margin: 0
+      }
+    );
+
+    // Arduino latency table
+    slide.addText("Typical Interrupt Latency:", {
+      x: 0.4, y: 2.38, w: 4.6, h: 0.28,
+      fontSize: 10.5, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const latRows = [
+      ["Platform", "Latency (approx.)", "Clock"],
+      ["Arduino Uno (16 MHz)", "~5–7 µs", "16 MHz"],
+      ["Arduino Nano (16 MHz)", "~5–7 µs", "16 MHz"],
+      ["ESP32 (240 MHz)", "~0.5–2 µs", "240 MHz"],
+      ["ESP32 + FreeRTOS ISR", "~2–5 µs", "240 MHz"],
+    ];
+    const latCW = [2.5, 1.5, 0.8];
+    for (let r = 0; r < latRows.length; r++) {
+      let lx = 0.4;
+      for (let c = 0; c < 3; c++) {
+        slide.addShape("rect", {
+          x: lx, y: 2.7 + r * 0.4, w: latCW[c], h: 0.38,
+          fill: { color: r === 0 ? C.navy : r % 2 === 0 ? C.slateLight : C.white },
+          line: { color: C.grayLight, pt: 0.5 }
+        });
+        slide.addText(latRows[r][c], {
+          x: lx + 0.05, y: 2.7 + r * 0.4, w: latCW[c] - 0.1, h: 0.38,
+          fontSize: 9.5, fontFace: r === 0 ? "Calibri" : "Calibri",
+          bold: r === 0, color: r === 0 ? C.white : C.navy, align: "center", margin: 0
+        });
+        lx += latCW[c];
+      }
+    }
+
+    // Effect text
+    slide.addText("Dampak pada WCET Task:", {
+      x: 0.4, y: 4.78, w: 4.6, h: 0.28,
+      fontSize: 10.5, fontFace: "Calibri", bold: true, color: C.orange, margin: 0
+    });
+    slide.addText("WCET_efektif = WCET_task + (n_ISR × Latency_ISR)", {
+      x: 0.4, y: 5.08, w: 4.6, h: 0.3,
+      fontSize: 10.5, fontFace: "Consolas", color: C.navy, bold: true, align: "center", margin: 0
+    });
+
+    // Right: Code + Tips
+    slide.addText("Minimisasi Interrupt Latency:", {
+      x: 5.15, y: 1.05, w: 4.4, h: 0.3,
+      fontSize: 11.5, fontFace: "Calibri", bold: true, color: C.navy, margin: 0
+    });
+    const isrCode = `// ISR yang ringkas — WCET rendah
+volatile bool sensorReady = false;
+volatile int encoderCount = 0;
+
+// ISR harus SINGKAT: hanya set flag!
+void IRAM_ATTR onEncoderTick() {
+  encoderCount++;  // Hanya increment counter
+}
+
+void setup() {
+  attachInterrupt(
+    digitalPinToInterrupt(2),
+    onEncoderTick,
+    RISING
+  );
+}
+
+void loop() {
+  // Proses data di task utama, bukan ISR
+  if (encoderCount > 0) {
+    noInterrupts();            // Atomic read
+    int cnt = encoderCount;
+    encoderCount = 0;
+    interrupts();
+    processEncoder(cnt);
+  }
+}`;
+    makeCodeBox(slide, isrCode, 5.15, 1.42, 4.4, 2.75);
+
+    const isTips = [
+      "Jadikan ISR sesingkat mungkin — hanya set flag atau simpan data minimal",
+      "Gunakan IRAM_ATTR pada ESP32 agar ISR dieksekusi dari RAM (lebih cepat)",
+      "Akses shared variable dengan noInterrupts()/interrupts() untuk atomicity",
+    ];
+    for (let i = 0; i < isTips.length; i++) {
+      slide.addShape("rect", { x: 5.15, y: 4.3 + i * 0.45, w: 0.12, h: 0.3, fill: { color: C.teal }, line: { type: "none" } });
+      slide.addText(isTips[i], {
+        x: 5.34, y: 4.3 + i * 0.45, w: 4.2, h: 0.34,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    addSpeakerNotes(slide, `Interrupt Latency adalah sumber ketidakpastian yang sering diabaikan dalam analisis WCET. Setiap kali ISR berjalan — misalnya dari encoder motor atau timer overflow — ia menunda task yang sedang berjalan. Pada Arduino Uno, latency ~5-7µs per interrupt; jika ada banyak interrupt per periode, total penundaannya signifikan. Solusinya: buat ISR seringkas mungkin (hanya set flag), dan proses data aktual di task utama.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 12: Kesimpulan
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres);
+    addTitle(slide, "Kesimpulan Akhir P25: Feasibility Test");
+    addSubTitle(slide, "Anggota 8 · Rekapitulasi dan takeaway utama");
+
+    const checkIcon = await renderIcon(FaCheckCircle, "#0D9488", 256);
+    slide.addImage({ data: checkIcon, x: 8.5, y: 0.1, w: 1.0, h: 1.0 });
+
+    const conclusions = [
+      {
+        num: "01",
+        title: "Feasibility Test adalah Fondasi",
+        text: "Tanpa Feasibility Test, kita hanya mengandalkan intuisi. Dengan menganalisis WCET, Deadline, dan Period, kita dapat membuktikan secara matematis bahwa robot line follower akan bekerja benar di semua kondisi.",
+        color: C.teal
+      },
+      {
+        num: "02",
+        title: "CPU Utilization sebagai Filter Pertama",
+        text: "Rumus U = Σ(Ci/Ti) memberikan keputusan cepat: jika U < 69.3% (untuk RMS), sistem dijamin feasible. Robot kita memiliki U ≈ 22%, jauh di bawah ambang batas — sistem sangat aman.",
+        color: C.orange
+      },
+      {
+        num: "03",
+        title: "millis()/micros() adalah Alat Ukur Empiris",
+        text: "Pada Arduino/ESP32 tanpa OS real-time, kita menggunakan micros() untuk mengukur WCET aktual setiap task. Data empiris ini menjadi input valid untuk analisis formal.",
+        color: "2563EB"
+      },
+      {
+        num: "04",
+        title: "Overrun, Jitter, dan Interrupt Latency",
+        text: "Ketiga fenomena ini adalah musuh nyata di lapangan yang dapat merusak kestabilan kontrol PID. Desain loop yang predictable dan ISR yang singkat adalah pertahanan utama.",
+        color: "7C3AED"
+      },
+      {
+        num: "05",
+        title: "Dari Analisis ke Implementasi",
+        text: "Feasibility Test bukan hanya teori — ia berujung pada desain kode konkret: loop non-blocking, deadline guard, anti-windup PID, dan pola timing berbasis micros(). Semua telah didemonstrasikan dengan kode C++ nyata.",
+        color: "059669"
+      },
+    ];
+
+    for (let i = 0; i < conclusions.length; i++) {
+      const col = i % 3 < 2 ? i % 3 : (i === 4 ? 1 : i % 3);
+      const row = i < 2 ? 0 : (i < 4 ? 1 : 2);
+      // Reflow: row 0 has 2, row 1 has 2, row 2 has 1
+      let cx, cy;
+      if (i < 2) { cx = 0.4 + i * 4.68; cy = 1.05; }
+      else if (i < 4) { cx = 0.4 + (i - 2) * 4.68; cy = 2.68; }
+      else { cx = 2.9; cy = 4.3; }
+      const cw = (i === 4) ? 4.2 : 4.5;
+      const ch = (i < 4) ? 1.54 : 1.1;
+
+      slide.addShape("rect", { x: cx, y: cy, w: cw, h: ch, fill: { color: C.white }, line: { color: C.grayLight, pt: 1 } });
+      slide.addShape("rect", { x: cx, y: cy, w: 0.55, h: ch, fill: { color: conclusions[i].color }, line: { type: "none" } });
+      slide.addText(conclusions[i].num, {
+        x: cx, y: cy + (ch / 2) - 0.2, w: 0.55, h: 0.4,
+        fontSize: 14, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+      });
+      slide.addText(conclusions[i].title, {
+        x: cx + 0.65, y: cy + 0.08, w: cw - 0.75, h: 0.3,
+        fontSize: 10, fontFace: "Calibri", bold: true, color: conclusions[i].color, margin: 0
+      });
+      slide.addText(conclusions[i].text, {
+        x: cx + 0.65, y: cy + 0.42, w: cw - 0.75, h: ch - 0.5,
+        fontSize: 9.5, fontFace: "Calibri", color: C.slate, margin: 0
+      });
+    }
+
+    addSpeakerNotes(slide, `Slide penutup ini merangkum seluruh perjalanan presentasi. Tekankan kembali bahwa Feasibility Test bukan sekadar syarat akademik — ini adalah metodologi engineering yang nyata digunakan dalam sistem embedded komersial. Robot line follower kita dengan U ≈ 22% memiliki ruang yang sangat lega, tetapi saat sistem berkembang (ditambah kamera, Bluetooth, navigasi), analisis harus diulang. Ajak pendengar untuk selalu mengukur sebelum mengklaim.`);
+  }
+
+  // ──────────────────────────────────────
+  // SLIDE 13: Q&A
+  // ──────────────────────────────────────
+  {
+    const slide = await makeSlide(pres, C.navy);
+
+    // Background decoration
+    slide.addShape("rect", { x: 0, y: 3.8, w: 10, h: 1.82, fill: { color: C.teal, transparency: 85 }, line: { type: "none" } });
+
+    const robotIcon = await renderIcon(FaRobot, "#0D9488", 512);
+    slide.addImage({ data: robotIcon, x: 0.3, y: 0.5, w: 2.5, h: 2.5, transparency: 25 });
+
+    slide.addText("Terima Kasih!", {
+      x: 2.8, y: 0.6, w: 6.8, h: 0.9,
+      fontSize: 40, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+    slide.addText("Kelompok 3 · Real-Time Systems · MINGGU 9 – P25", {
+      x: 2.8, y: 1.55, w: 6.8, h: 0.38,
+      fontSize: 12, fontFace: "Calibri", color: "7DD3FC", align: "center", margin: 0
+    });
+    slide.addText("Feasibility Test pada Robot Line Follower (Arduino/ESP32 · C++)", {
+      x: 2.8, y: 1.95, w: 6.8, h: 0.32,
+      fontSize: 11, fontFace: "Calibri", color: C.gray, align: "center", italic: true, margin: 0
+    });
+
+    // QA Box
+    slide.addShape("rect", { x: 2.8, y: 2.45, w: 6.8, h: 0.9, fill: { color: C.teal }, line: { type: "none" } });
+    slide.addText("❓ Sesi Tanya Jawab", {
+      x: 2.8, y: 2.45, w: 6.8, h: 0.9,
+      fontSize: 22, fontFace: "Calibri", bold: true, color: C.white, align: "center", margin: 0
+    });
+
+    slide.addText(
+      "\"Real-time does not mean fast; it means on time.\"\n— Hermann Kopetz",
+      {
+        x: 1.0, y: 3.88, w: 8.0, h: 0.72,
+        fontSize: 12, fontFace: "Calibri", color: "CBD5E1", align: "center", italic: true, margin: 0
+      }
+    );
+
+    // Contact row
+    slide.addText("Anggota 1  •  Anggota 2  •  Anggota 3  •  Anggota 4  •  Anggota 5  •  Anggota 6  •  Anggota 7  •  Anggota 8", {
+      x: 0.3, y: 5.1, w: 9.4, h: 0.3,
+      fontSize: 8.5, fontFace: "Calibri", color: C.gray, align: "center", margin: 0
+    });
+
+    addSpeakerNotes(slide, `Slide penutup. Buka sesi tanya jawab. Kemungkinan pertanyaan: (1) Bagaimana jika WCET melebihi deadline? → Optimasi kode, pisahkan ke ISR, atau gunakan RTOS. (2) Apakah micros() akurat di ESP32? → Ya, resolusi 1µs di ESP32, lebih baik dari Uno (4µs). (3) Kapan perlu migrasi ke RTOS? → Ketika jumlah task bertambah dan U mendekati 70%, atau ketika ada kebutuhan preemption ketat.`);
+  }
+
+  // Save
+  await pres.writeFile({ fileName: "/mnt/user-data/outputs/Kelompok3_P25_FeasibilityTest.pptx" });
+  console.log("Done!");
+}
+
+main().catch(console.error);

@@ -1,0 +1,20 @@
+using UnityEngine;
+
+public class TreeWinds : MonoBehaviour
+{
+    public float swayAmount = 2f;
+    public float swaySpeed = 1f;
+
+    Quaternion startRot;
+
+    void Start()
+    {
+        startRot = transform.rotation;
+    }
+
+    void Update()
+    {
+        float sway = Mathf.Sin(Time.time * swaySpeed) * swayAmount;
+        transform.rotation = startRot * Quaternion.Euler(0, 0, sway);
+    }
+}

@@ -3,18 +3,29 @@ using System.Collections;
 
 public class PlayerController : MonoBehaviour
 {
-    private float turnSmoothVelocity; // internal untuk SmoothDampAngle
-    public float turnSmoothTime = 0.15f; // sesuaikan smoothness
-    public Animator animator;
+    private float turnSmoothVelocity;
+    private CapsuleCollider col;
+
+    [Header("Movement")]
+    public float turnSmoothTime = 0.15f;
     public float moveSpeed = 5f;
+    public float sprintSpeed = 9f;
+
+    [Header("Dash")]
+    public float dashSpeed = 14f;
+    public float dashDuration = 0.15f;
+
+    [Header("References")]
+    public Animator animator;
 
     [Header("Tool")]
     public GameObject hoe;
 
     [Header("Ground")]
-    public float groundCheckDistance = 5f;
+    public float groundCheckDistance = 8f;
     public LayerMask groundLayer;
-    public float playerHeightOffset = 1.2f;
+    public LayerMask stairLayer;
+    public float playerHeightOffset = 0f;
 
     [Header("Obstacle")]
     public float obstacleCheckDistance = 0.6f;
@@ -22,6 +33,9 @@ public class PlayerController : MonoBehaviour
 
     private float horizontal;
     private float vertical;
+
+    private bool isSprinting;
+    private bool isDashing;
 
     // =========================
     // IDLE SYSTEM
@@ -32,6 +46,7 @@ public class PlayerController : MonoBehaviour
     void Awake()
     {
         animator = GetComponentInChildren<Animator>();
+        col = GetComponent<CapsuleCollider>();
     }
 
     void Update()
@@ -46,27 +61,35 @@ public class PlayerController : MonoBehaviour
         float speed = inputMove.magnitude;
 
         // =========================
-        // ANIMATOR SPEED (lari)
+        // SPRINT SYSTEM
         // =========================
-        animator.SetFloat("Speed", speed, 0.1f, Time.deltaTime);
+        bool sprintHold =
+            Input.GetKey(KeyCode.LeftShift) ||
+            Input.GetMouseButton(1);
+
+        isSprinting = sprintHold;
+        animator.SetBool("isSprinting", isSprinting);
 
         // =========================
-        // IDLE SYSTEM (GENSHIN STYLE)
+        // ANIMATOR SPEED
+        // =========================
+        float animSpeed = isSprinting ? 2f : speed;
+        animator.SetFloat("Speed", animSpeed, 0.1f, Time.deltaTime);
+
+        // =========================
+        // IDLE SYSTEM
         // =========================
         if (speed < 0.1f)
         {
             idleTimer += Time.deltaTime;
             randomTimer += Time.deltaTime;
 
-            // masuk idle setelah delay
             if (idleTimer > 2f)
             {
-                // random idle 2 (stretch)
                 if (randomTimer > 6f)
                 {
-                    int rand = Random.Range(0, 2); // 0 atau 1
+                    int rand = Random.Range(0, 2);
                     animator.SetInteger("IdleRandom", rand);
-
                     randomTimer = 0f;
                 }
             }
@@ -81,11 +104,18 @@ public class PlayerController : MonoBehaviour
         animator.SetFloat("IdleDelay", idleTimer);
 
         // =========================
-        // INPUT CANGKUL (F)
+        // DASH SYSTEM
+        // =========================
+        if (Input.GetMouseButtonDown(1))
+        {
+            StartCoroutine(Dash());
+        }
+
+        // =========================
+        // INPUT CANGKUL
         // =========================
         if (Input.GetKeyDown(KeyCode.F))
         {
-            // hanya saat diam & tidak sedang idle 2
             if (speed < 0.1f && animator.GetInteger("IdleRandom") == 0)
             {
                 StartCoroutine(CangkulRoutine());
@@ -96,21 +126,41 @@ public class PlayerController : MonoBehaviour
     }
 
     // =========================
+    // DASH
+    // =========================
+    IEnumerator Dash()
+    {
+        if (isDashing)
+            yield break;
+
+        isDashing = true;
+        animator.SetBool("isSprinting", true);
+
+        float timer = 0f;
+
+        while (timer < dashDuration)
+        {
+            transform.position += transform.forward * dashSpeed * Time.deltaTime;
+            timer += Time.deltaTime;
+            yield return null;
+        }
+
+        animator.SetBool("isSprinting", false);
+        isDashing = false;
+    }
+
+    // =========================
     // CANGKUL SYSTEM
     // =========================
     IEnumerator CangkulRoutine()
     {
-        // munculkan cangkul
         if (hoe != null)
             hoe.SetActive(true);
 
-        // trigger animasi
         animator.SetTrigger("Cangkul");
 
-        // tunggu durasi animasi (sesuaikan!)
         yield return new WaitForSeconds(1.2f);
 
-        // hilangkan cangkul
         if (hoe != null)
             hoe.SetActive(false);
     }
@@ -120,12 +170,14 @@ public class PlayerController : MonoBehaviour
     // =========================
     void MoveCharacter(Vector3 inputMove)
     {
+        if (isDashing)
+            return;
+
         Vector3 camForward = Camera.main.transform.forward;
         Vector3 camRight = Camera.main.transform.right;
 
         camForward.y = 0f;
         camRight.y = 0f;
-
         camForward.Normalize();
         camRight.Normalize();
 
@@ -133,34 +185,49 @@ public class PlayerController : MonoBehaviour
         Vector3 nextPos = transform.position;
 
         // =========================
-        // SMOOTH ROTATION & CEK OBSTACLE
+        // SMOOTH ROTATION
         // =========================
         if (move.magnitude > 0.1f)
         {
-            // Smooth rotasi karakter
             float targetAngle = Mathf.Atan2(move.x, move.z) * Mathf.Rad2Deg;
             float currentY = transform.eulerAngles.y;
-            float smoothAngle = Mathf.SmoothDampAngle(currentY, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
+            float smoothAngle = Mathf.SmoothDampAngle(
+                currentY, targetAngle, ref turnSmoothVelocity, turnSmoothTime);
             transform.rotation = Quaternion.Euler(0f, smoothAngle, 0f);
 
-            // Cek obstacle di arah move
-            Ray forwardRay = new Ray(transform.position + Vector3.up * 1f, transform.forward);
+            // =========================
+            // OBSTACLE CHECK
+            // =========================
+            Ray forwardRay = new Ray(
+                transform.position + Vector3.up * 1f,
+                transform.forward);
             RaycastHit forwardHit;
+            float currentSpeed = isSprinting ? sprintSpeed : moveSpeed;
+
             if (!Physics.Raycast(forwardRay, out forwardHit, obstacleCheckDistance, obstacleLayer))
             {
-                nextPos += transform.forward * moveSpeed * Time.deltaTime;
+                nextPos += transform.forward * currentSpeed * Time.deltaTime;
             }
         }
 
         // =========================
         // GROUND CHECK
         // =========================
+        LayerMask combinedMask = groundLayer | stairLayer;
+
         Ray ray = new Ray(nextPos + Vector3.up * 3f, Vector3.down);
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, groundCheckDistance, groundLayer))
+
+        if (Physics.Raycast(ray, out hit, groundCheckDistance, combinedMask))
         {
             float targetY = hit.point.y + playerHeightOffset;
-            nextPos.y = targetY;
+            float distanceToTarget = Mathf.Abs(transform.position.y - targetY);
+
+            // Snap langsung kalau jauh (turun dari tangga / teleport)
+            if (distanceToTarget > 0.5f)
+                nextPos.y = targetY;
+            else
+                nextPos.y = Mathf.Lerp(transform.position.y, targetY, 20f * Time.deltaTime);
         }
 
         transform.position = nextPos;
