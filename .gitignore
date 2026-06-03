@@ -97,3 +97,33 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Kiro AI IDE
+/.kiro/
+
+# Cursor AI IDE
+/.cursor/
+
+# Agent skills (Unity AI agent)
+/.agent/
+
+# VS Code workspace settings (optional, uncomment if you don't want to share)
+# /.vscode/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Large binary/asset files (add specific extensions you don't want to track)
+*.blend
+*.zip
+*.rar
+*.7z
+
+# Terrain layer and lighting data (auto-generated, can be large)
+/[Aa]ssets/**/*.terrainlayer
+/[Aa]ssets/**/LightingData.asset

@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "streamable-http",
+      "disabled": false,
+      "url": "http://localhost:22085"
+    }
+  }
+}

@@ -173,6 +173,9 @@ public class PlayerController : MonoBehaviour
         if (isDashing)
             return;
 
+        if (Camera.main == null)
+            return;
+
         Vector3 camForward = Camera.main.transform.forward;
         Vector3 camRight = Camera.main.transform.right;
 

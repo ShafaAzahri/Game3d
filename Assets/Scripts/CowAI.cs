@@ -14,6 +14,11 @@ public class CowAI : MonoBehaviour
     public LayerMask obstacleLayer;
     public float obstacleCheckDistance = 1.2f;
 
+    [Header("Ground")]
+    public float groundCheckDistance = 8f;
+    public LayerMask groundLayer;
+    public float heightOffset = 0f;
+
     [Header("Cow Avoidance")]
     public LayerMask cowLayer;
     public float avoidDistance = 1.5f;
@@ -43,6 +48,9 @@ public class CowAI : MonoBehaviour
     {
         timer += Time.deltaTime;
 
+        // Always snap to ground (even when idle)
+        SnapToGround();
+
         if (isMoving)
         {
             MoveToTarget();
@@ -52,6 +60,28 @@ public class CowAI : MonoBehaviour
         {
             ChooseAction();
             SetNextAction();
+        }
+    }
+
+    void SnapToGround()
+    {
+        Terrain activeTerrain = Terrain.activeTerrain;
+        if (activeTerrain != null)
+        {
+            float terrainY = activeTerrain.SampleHeight(transform.position) + activeTerrain.transform.position.y;
+            
+            // Auto-calculate offset from collider bounds (feet position)
+            float offset = heightOffset;
+            Collider col = GetComponent<Collider>();
+            if (col != null && offset == 0f)
+            {
+                offset = col.bounds.extents.y;
+            }
+            
+            terrainY += offset;
+            Vector3 pos = transform.position;
+            pos.y = Mathf.Lerp(pos.y, terrainY, 15f * Time.deltaTime);
+            transform.position = pos;
         }
     }
 
@@ -207,8 +237,31 @@ public class CowAI : MonoBehaviour
         // MOVE
         // =========================
 
-        transform.position +=
-            direction * moveSpeed * Time.deltaTime;
+        Vector3 nextPos = transform.position + direction * moveSpeed * Time.deltaTime;
+
+        // =========================
+        // GROUND CHECK (snap to terrain)
+        // =========================
+
+        // Method 1: Use Terrain.SampleHeight (always works with terrain)
+        Terrain activeTerrain = Terrain.activeTerrain;
+        if (activeTerrain != null)
+        {
+            float terrainY = activeTerrain.SampleHeight(nextPos) + activeTerrain.transform.position.y + heightOffset;
+            nextPos.y = Mathf.Lerp(transform.position.y, terrainY, 10f * Time.deltaTime);
+        }
+        else
+        {
+            // Fallback: Raycast for non-terrain ground
+            Ray groundRay = new Ray(nextPos + Vector3.up * 5f, Vector3.down);
+            RaycastHit groundHit;
+            if (Physics.Raycast(groundRay, out groundHit, groundCheckDistance, groundLayer))
+            {
+                nextPos.y = Mathf.Lerp(transform.position.y, groundHit.point.y + heightOffset, 10f * Time.deltaTime);
+            }
+        }
+
+        transform.position = nextPos;
 
         // =========================
         // SAMPAI TUJUAN
