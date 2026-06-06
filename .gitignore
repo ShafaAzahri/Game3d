@@ -43,6 +43,7 @@ ExportedObj/
 *.csproj
 *.unityproj
 *.sln
+*.slnx
 *.suo
 *.tmp
 *.user
@@ -54,6 +55,9 @@ ExportedObj/
 *.mdb
 *.opendb
 *.VC.db
+
+# Unity auto-generated schema folder
+/UIElementsSchema/
 
 # Unity3D generated meta files
 *.pidb.meta
@@ -104,11 +108,19 @@ InitTestScene*.unity*
 # Cursor AI IDE
 /.cursor/
 
-# Agent skills (Unity AI agent)
+# Agent skills & AI tools (Unity AI agent)
 /.agent/
+/.agents/
 
-# VS Code workspace settings (optional, uncomment if you don't want to share)
-# /.vscode/
+# Kilocode AI IDE
+/.kilocode/
+
+# VS Code workspace settings
+/.vscode/
+
+# Agent lock/temp files
+skills-lock.json
+temp_mat.json
 
 # OS generated files
 .DS_Store

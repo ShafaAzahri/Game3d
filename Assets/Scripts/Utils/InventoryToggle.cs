@@ -3,14 +3,17 @@ using UnityEngine;
 public class InventoryToggle : MonoBehaviour
 {
     public GameObject inventoryUI;
-    public GameObject hotbarUI;
 
+    private InventoryUI inventoryUIScript;
     private bool isOpen = false;
 
     void Start()
     {
-        inventoryUI.SetActive(false);
-        hotbarUI.SetActive(true);
+        if (inventoryUI != null)
+        {
+            inventoryUIScript = inventoryUI.GetComponent<InventoryUI>();
+            inventoryUI.SetActive(false);
+        }
     }
 
     void Update()
@@ -19,24 +22,23 @@ public class InventoryToggle : MonoBehaviour
         {
             isOpen = !isOpen;
 
-            inventoryUI.SetActive(isOpen);
-
-            // kalau inventory buka -> hotbar hilang
-            hotbarUI.SetActive(!isOpen);
-
             if (isOpen)
             {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
+                if (inventoryUIScript != null)
+                    inventoryUIScript.Open();
+                else if (inventoryUI != null)
+                    inventoryUI.SetActive(true);
 
-                Time.timeScale = 0f;
+                Debug.Log("[InventoryToggle] Inventory dibuka.");
             }
             else
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
+                if (inventoryUIScript != null)
+                    inventoryUIScript.Close();
+                else if (inventoryUI != null)
+                    inventoryUI.SetActive(false);
 
-                Time.timeScale = 1f;
+                Debug.Log("[InventoryToggle] Inventory ditutup.");
             }
         }
     }

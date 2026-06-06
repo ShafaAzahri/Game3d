@@ -38,6 +38,12 @@ public class PlayerController : MonoBehaviour
     private bool isDashing;
 
     // =========================
+    // DIALOG LOCK
+    // =========================
+    /// <summary>Set to false by DialogManager to freeze player during dialog.</summary>
+    public bool CanMove { get; set; } = true;
+
+    // =========================
     // IDLE SYSTEM
     // =========================
     private float idleTimer = 0f;
@@ -51,6 +57,13 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // Jika player sedang di-lock oleh dialog, abaikan semua input
+        if (!CanMove)
+        {
+            animator.SetFloat("Speed", 0f, 0.1f, Time.deltaTime);
+            return;
+        }
+
         // =========================
         // INPUT GERAK
         // =========================
