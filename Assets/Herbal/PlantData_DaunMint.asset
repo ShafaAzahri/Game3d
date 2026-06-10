@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 66909fdc57992314b929840ab8a8070e, type: 3}
+  m_Name: PlantData_DaunMint
+  m_EditorClassIdentifier: Assembly-CSharp::PlantData
+  plantName: Tanaman Mint
+  seedItem: {fileID: 11400000, guid: 0644d09059cb9d943bf6a5e537dc4d9f, type: 2}
+  harvestItem: {fileID: 11400000, guid: 3cd4664826588394992580daccadb8df, type: 2}
+  harvestAmount: 2
+  growthTimeSeconds: 30
+  grownPrefab: {fileID: 0}
+  spawnHeight: 0.1

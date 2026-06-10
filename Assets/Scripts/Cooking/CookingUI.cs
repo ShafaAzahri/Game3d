@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 /// <summary>
@@ -36,6 +37,9 @@ public class CookingUI : MonoBehaviour
     [Header("Buttons")]
     public Button cookButton;
     public Button closeButton;
+
+    [Header("Status Message")]
+    public Text statusMessage;
 
     [Header("References")]
     public CookingTrigger cookingTrigger;
@@ -78,6 +82,25 @@ public class CookingUI : MonoBehaviour
             Debug.LogWarning("[CookingUI] Array recipes kosong!");
             return;
         }
+
+        // Setup Buttons
+        if (cookButton != null)
+        {
+            cookButton.onClick.RemoveAllListeners();
+            cookButton.onClick.AddListener(OnCookPressed);
+        }
+
+        if (closeButton != null)
+        {
+            closeButton.onClick.RemoveAllListeners();
+            closeButton.onClick.AddListener(OnClosePressed);
+        }
+
+        // Pastikan ukuran grid sesuai request (xMin:0.02 -> xMax:0.196, yMin:0.704 -> yMax:0.85)
+        columns = 5;
+        visibleRows = 5;
+        spacingX = 0.02f;
+        spacingY = 0.02f;
 
         scrollOffset = 0f;
         scrollTarget = 0f;
@@ -122,7 +145,7 @@ public class CookingUI : MonoBehaviour
         if (leftPanel == null || recipes == null) return;
 
         // cellHeight dihitung dari visibleRows supaya pas 2 row yang kelihatan
-        float visibleArea = 0.83f;
+        float visibleArea = 0.85f;
         float cellHeight = (visibleArea - spacingY * (visibleRows + 1)) / visibleRows;
 
         int totalRows = Mathf.CeilToInt((float)recipes.Length / columns);
@@ -150,10 +173,11 @@ public class CookingUI : MonoBehaviour
 
     void UpdateButtonPositions()
     {
-        float visibleArea = 0.83f;
+        // Teks \"Resep Makanan\" ada di Y=0.88 - 0.95. Kita pasang resep mulai di Y=0.85
+        float visibleArea = 0.85f; 
         float cellHeight = (visibleArea - spacingY * (visibleRows + 1)) / visibleRows;
         float cellWidth = (1f - spacingX * (columns + 1)) / columns;
-        float startY = 0.83f;
+        float startY = 0.85f;
 
         for (int i = 0; i < buttonRects.Count; i++)
         {
@@ -319,9 +343,21 @@ public class CookingUI : MonoBehaviour
                     ingredientNames[i] != null)
                     ingredientNames[i].text = ing.itemName;
 
+                // Tampilkan jumlah yang dimiliki vs yang dibutuhkan
                 if (ingredientAmounts != null && i < ingredientAmounts.Length &&
                     ingredientAmounts[i] != null)
-                    ingredientAmounts[i].text = ing.amountRequired + " / " + ing.amountRequired;
+                {
+                    int owned = 0;
+                    if (InventoryManager.Instance != null)
+                        owned = InventoryManager.Instance.GetAmount(ing.itemName);
+
+                    ingredientAmounts[i].text = owned + " / " + ing.amountRequired;
+
+                    // Warna merah jika tidak cukup
+                    ingredientAmounts[i].color = (owned >= ing.amountRequired)
+                        ? new Color(0.7f, 1f, 0.7f, 1f)   // hijau
+                        : new Color(1f, 0.45f, 0.4f, 1f);  // merah
+                }
             }
             else
             {
@@ -364,11 +400,70 @@ public class CookingUI : MonoBehaviour
 
         CookingRecipe recipe = recipes[selectedIndex];
 
-        // TODO: Cek inventory apakah bahan cukup
-        // TODO: Kurangi bahan dari inventory
-        // TODO: Tambah HP player
+        if (InventoryManager.Instance == null)
+        {
+            ShowStatus("Inventory tidak ditemukan!", false);
+            return;
+        }
 
-        Debug.Log("Memasak: " + recipe.recipeName + " (+" + recipe.hpRestore + " HP)");
+        // 1. Cek apakah semua bahan cukup
+        foreach (var ing in recipe.ingredients)
+        {
+            if (!InventoryManager.Instance.HasItem(ing.itemName, ing.amountRequired))
+            {
+                ShowStatus("Bahan tidak cukup! Kurang " + ing.itemName, false);
+                return;
+            }
+        }
+
+        // 2. Kurangi semua bahan dari inventory
+        foreach (var ing in recipe.ingredients)
+        {
+            InventoryManager.Instance.RemoveItem(ing.itemName, ing.amountRequired);
+        }
+
+        // 3. Tambah hasil masakan ke inventory
+        if (recipe.resultItem != null)
+        {
+            InventoryManager.Instance.AddItem(recipe.resultItem, 1);
+            Debug.Log($"[Cooking] Berhasil memasak {recipe.resultItem.itemName}!");
+        }
+        else
+        {
+            // Fallback: gunakan recipeName + recipeImage
+            InventoryManager.Instance.AddItem(recipe.recipeName, 1, recipe.recipeImage);
+            Debug.Log($"[Cooking] Berhasil memasak {recipe.recipeName}!");
+        }
+
+        // 4. Tampilkan pesan sukses
+        ShowStatus("Berhasil memasak " + recipe.recipeName + "! (+" + recipe.hpRestore + " HP)", true);
+
+        // 5. Update tampilan ingredient (stok berubah)
+        UpdateIngredients(recipe);
+    }
+
+    private void ShowStatus(string message, bool success)
+    {
+        if (statusMessage != null)
+        {
+            statusMessage.text = message;
+            statusMessage.color = success
+                ? new Color(0.5f, 1f, 0.5f, 1f)   // hijau
+                : new Color(1f, 0.4f, 0.4f, 1f);   // merah
+        }
+
+        Debug.Log($"[Cooking] {message}");
+
+        // Auto-hide status setelah 2 detik
+        StopAllCoroutines();
+        StartCoroutine(HideStatusAfter(2f));
+    }
+
+    private IEnumerator HideStatusAfter(float seconds)
+    {
+        yield return new WaitForSecondsRealtime(seconds);
+        if (statusMessage != null)
+            statusMessage.text = "";
     }
 
     public void OnClosePressed()

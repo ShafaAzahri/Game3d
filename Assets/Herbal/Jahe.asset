@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Jahe
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemName: Jahe
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: ec5700b47aa34fe49b8735e325f7d83e, type: 3}
   description: Jahe segar hasil kebun.
   itemType: 1

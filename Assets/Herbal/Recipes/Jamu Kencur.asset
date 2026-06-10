@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9daf4499e5d36684bbb2015698633648, type: 3}
+  m_Name: Jamu Kencur
+  m_EditorClassIdentifier: Assembly-CSharp::CookingRecipe
+  recipeName: Jamu Kencur
+  description: Jamu kencur tradisional, penghilang pegal.
+  recipeImage: {fileID: 21300000, guid: 4bbf635de1b2ef94dbe68b7132c52c5d, type: 3}
+  resultItem: {fileID: 11400000, guid: a27247f5a6ca967419ae7b63720e0776, type: 2}
+  hpRestore: 20
+  ingredients:
+  - itemName: Kencur
+    itemIcon: {fileID: 21300000, guid: 774980cd1bf2ac74ba1636caf1239c45, type: 3}
+    amountRequired: 2

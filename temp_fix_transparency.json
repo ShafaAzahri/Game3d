@@ -1,0 +1,5 @@
+{
+  "csharpCode": "using UnityEngine;\nusing UnityEditor;\n\npublic class FixTransparency\n{\n    public static string Main()\n    {\n        var sb = new System.Text.StringBuilder();\n        \n        string[] paths = { \"Assets/Herbal/JamuIcon.png\", \"Assets/Herbal/SpiceIcon.png\" };\n        foreach (var path in paths)\n        {\n            TextureImporter ti = AssetImporter.GetAtPath(path) as TextureImporter;\n            if (ti != null) \n            {\n                ti.alphaIsTransparency = true;\n                ti.SaveAndReimport();\n                sb.AppendLine(\"[OK] Alpha transparency diaktifkan untuk: \" + path);\n            }\n        }\n\n        AssetDatabase.Refresh();\n        return sb.ToString();\n    }\n}",
+  "className": "FixTransparency",
+  "methodName": "Main"
+}

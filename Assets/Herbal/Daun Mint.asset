@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a8dc99050369b5947a11abafc9ce9f26, type: 3}
+  m_Name: Daun Mint
+  m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
+  itemName: Daun Mint
+  icon: {fileID: 21300000, guid: f5b1a0d3598007b498b8017375b6ea65, type: 3}
+  description: Daun mint segar yang memberikan sensasi dingin.
+  itemType: 1

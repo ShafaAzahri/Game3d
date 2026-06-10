@@ -7,6 +7,10 @@ public class CookingRecipe : ScriptableObject
     public string description;
     public Sprite recipeImage;
 
+    [Header("Result")]
+    [Tooltip("Item hasil masakan yang masuk inventory. Jika null, akan pakai recipeName & recipeImage.")]
+    public InventoryItem resultItem;
+
     [Header("Effect")]
     public int hpRestore;
 
@@ -21,3 +25,4 @@ public class CookingRecipe : ScriptableObject
         public int amountRequired;
     }
 }
+

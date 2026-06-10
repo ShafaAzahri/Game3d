@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Lengkuas
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemName: Lengkuas
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 774980cd1bf2ac74ba1636caf1239c45, type: 3}
   description: Lengkuas segar hasil kebun.
   itemType: 1

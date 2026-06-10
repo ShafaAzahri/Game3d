@@ -32,12 +32,14 @@ public class GardenPlot : MonoBehaviour
     [Tooltip("Daftar tanaman yang bisa ditanam di petak ini. Player bisa pilih saat menanam.")]
     public PlantData[] availablePlants;
 
-    [Header("Terrain Paint")]
     [Tooltip("Radius (meter) area terrain yang dicat saat mencangkul")]
     public float paintRadius = 1.8f;
 
     [Tooltip("Nama layer terrain untuk tanah. Harus cocok (case-insensitive) dengan nama TerrainLayer asset.")]
     public string soilLayerName = "tanah";
+
+    [Tooltip("Nama layer terrain untuk rumput (kembali setelah panen).")]
+    public string grassLayerName = "NewLayer 2";
 
     [Header("Pertumbuhan")]
     [Tooltip("Override waktu tumbuh (detik). Isi 0 untuk pakai dari PlantData.")]
@@ -56,6 +58,7 @@ public class GardenPlot : MonoBehaviour
     private GameObject  spawnedPlant;      // prefab 3D yang sudah di-spawn
     private Terrain     terrain;
     private int         soilLayerIndex  = -1;
+    private int         grassLayerIndex = -1;
     private bool        terrainCached   = false;
     private bool        waitingForSeed  = false; // sedang di UI pilih bibit
 
@@ -164,7 +167,7 @@ public class GardenPlot : MonoBehaviour
     private void Hoe()
     {
         SetState(PlotState.Hoed);
-        PaintSoilTexture();
+        PaintTerrainLayer(soilLayerIndex);
         Debug.Log($"[GardenPlot] {name}: Tanah dicangkul!");
     }
 
@@ -241,7 +244,8 @@ public class GardenPlot : MonoBehaviour
         if (spawnedPlant != null) { Destroy(spawnedPlant); spawnedPlant = null; }
         currentPlant = null;
         growTimer    = 0f;
-        SetState(PlotState.Hoed);
+        SetState(PlotState.Empty);
+        PaintTerrainLayer(grassLayerIndex);
     }
 
 
@@ -308,12 +312,12 @@ public class GardenPlot : MonoBehaviour
     // TERRAIN PAINT
     // ─────────────────────────────────────────────
 
-    private void PaintSoilTexture()
+    private void PaintTerrainLayer(int targetLayerIndex)
     {
         if (!terrainCached) CacheTerrain();
-        if (terrain == null || soilLayerIndex < 0)
+        if (terrain == null || targetLayerIndex < 0)
         {
-            Debug.LogWarning("[GardenPlot] Terrain / layer tanah tidak ditemukan. Skip paint.");
+            Debug.LogWarning($"[GardenPlot] Terrain / layer index tidak ditemukan (target={targetLayerIndex}). Skip paint.");
             return;
         }
 
@@ -349,7 +353,7 @@ public class GardenPlot : MonoBehaviour
                 if (dx * dx + dz * dz > radius * radius) continue;
 
                 for (int l = 0; l < layerCount; l++)
-                    alphas[z, x, l] = (l == soilLayerIndex) ? 1f : 0f;
+                    alphas[z, x, l] = (l == targetLayerIndex) ? 1f : 0f;
             }
         }
 
@@ -367,20 +371,30 @@ public class GardenPlot : MonoBehaviour
 
         TerrainData td = terrain.terrainData;
         soilLayerIndex = -1;
+        grassLayerIndex = -1;
 
         for (int i = 0; i < td.terrainLayers.Length; i++)
         {
-            if (td.terrainLayers[i] != null &&
-                td.terrainLayers[i].name.ToLower().Contains(soilLayerName.ToLower()))
+            if (td.terrainLayers[i] != null)
             {
-                soilLayerIndex = i;
-                Debug.Log($"[GardenPlot] Layer '{soilLayerName}' ditemukan di index {i}.");
-                break;
+                string layerName = td.terrainLayers[i].name.ToLower();
+                if (layerName.Contains(soilLayerName.ToLower()))
+                {
+                    soilLayerIndex = i;
+                    Debug.Log($"[GardenPlot] Layer '{soilLayerName}' ditemukan di index {i}.");
+                }
+                if (layerName.Contains(grassLayerName.ToLower()))
+                {
+                    grassLayerIndex = i;
+                    Debug.Log($"[GardenPlot] Layer rumput '{grassLayerName}' ditemukan di index {i}.");
+                }
             }
         }
 
         if (soilLayerIndex < 0)
-            Debug.LogWarning($"[GardenPlot] Layer terrain '{soilLayerName}' tidak ditemukan! Pastikan nama TerrainLayer asset mengandung '{soilLayerName}'.");
+            Debug.LogWarning($"[GardenPlot] Layer terrain '{soilLayerName}' tidak ditemukan!");
+        if (grassLayerIndex < 0)
+            Debug.LogWarning($"[GardenPlot] Layer terrain '{grassLayerName}' tidak ditemukan!");
 
         terrainCached = true;
     }
@@ -431,7 +445,7 @@ public class GardenPlot : MonoBehaviour
 
         // Repaint tanah jika sudah dicangkul
         if (currentState >= PlotState.Hoed)
-            PaintSoilTexture();
+            PaintTerrainLayer(soilLayerIndex);
 
         // Spawn prefab jika sudah siap panen
         if (currentState == PlotState.Ready && currentPlant?.grownPrefab != null)
