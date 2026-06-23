@@ -24,6 +24,16 @@ public class DialogManager : MonoBehaviour
     public GameObject interactPrompt;
     public GameObject hotbarUI;          // Hotbar UI yang akan dinonaktifkan saat dialog
 
+    [Header("Portrait VN-Style (Kiri & Kanan)")]
+    [Tooltip("Image portrait sisi KIRI — biasanya untuk Player/MC (Robby).")]
+    public Image leftPortrait;
+    [Tooltip("Image portrait sisi KANAN — biasanya untuk NPC (Nenek, Laras, dll).")]
+    public Image rightPortrait;
+    [Tooltip("Warna untuk karakter yang SEDANG bicara (terang).")]
+    public Color activePortraitColor = Color.white;
+    [Tooltip("Warna untuk karakter yang TIDAK bicara (redup, biar siluet makin gelap).")]
+    public Color inactivePortraitColor = new Color(0.35f, 0.35f, 0.40f, 1f);
+
     [Header("Typewriter Settings")]
     public float typewriterSpeed = 0.03f;
 
@@ -34,6 +44,10 @@ public class DialogManager : MonoBehaviour
     // State
     private DialogLine[] currentLines;
     private int currentLineIndex = 0;
+
+    // Siluet kedua karakter untuk dialog yang sedang berjalan
+    private Sprite playerSilhouette;   // siluet sisi kiri (MC)
+    private Sprite npcSilhouette;      // siluet sisi kanan (NPC)
     private bool isTyping = false;
     private bool dialogActive = false;
     private Coroutine typewriterCoroutine;
@@ -87,6 +101,16 @@ public class DialogManager : MonoBehaviour
     // ─────────────────────────────────────────────────────────────
     // PUBLIC API
     // ─────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Set gambar siluet untuk kedua sisi sebelum dialog dimulai.
+    /// playerSil = siluet MC (kiri), npcSil = siluet NPC (kanan).
+    /// </summary>
+    public void SetPortraitSilhouettes(Sprite playerSil, Sprite npcSil)
+    {
+        playerSilhouette = playerSil;
+        npcSilhouette    = npcSil;
+    }
 
     /// <summary>
     /// Mulai dialog normal (G key untuk lanjut).
@@ -172,11 +196,52 @@ public class DialogManager : MonoBehaviour
             speakerSubtitleText.gameObject.SetActive(!string.IsNullOrEmpty(line.subtitle));
         }
 
+        // Gambar ekspresi / portrait — gaya Visual Novel (kiri & kanan)
+        // Yang sedang bicara: tampil pose ekspresinya (terang).
+        // Lawan bicara: tampil siluet (redup).
+        UpdatePortraits(line);
+
         // Sembunyikan indikator ▶ saat mengetik
         if (nextIndicator != null) nextIndicator.SetActive(false);
 
         if (typewriterCoroutine != null) StopCoroutine(typewriterCoroutine);
         typewriterCoroutine = StartCoroutine(TypewriterEffect(line.text));
+    }
+
+    /// <summary>
+    /// Atur dua portrait gaya Visual Novel berdasarkan siapa yang bicara.
+    /// Speaker → pose ekspresi (terang). Lawan bicara → siluet (redup).
+    /// </summary>
+    private void UpdatePortraits(DialogLine line)
+    {
+        if (line.isPlayerLine)
+        {
+            // Player (MC) bicara di sisi KIRI
+            SetPortrait(leftPortrait,  line.expression != null ? line.expression : playerSilhouette, true);
+            SetPortrait(rightPortrait, npcSilhouette, false);
+        }
+        else
+        {
+            // NPC bicara di sisi KANAN
+            SetPortrait(rightPortrait, line.expression != null ? line.expression : npcSilhouette, true);
+            SetPortrait(leftPortrait,  playerSilhouette, false);
+        }
+    }
+
+    private void SetPortrait(Image img, Sprite sprite, bool isActive)
+    {
+        if (img == null) return;
+
+        if (sprite == null)
+        {
+            // Tidak ada gambar untuk sisi ini → sembunyikan
+            img.gameObject.SetActive(false);
+            return;
+        }
+
+        img.sprite = sprite;
+        img.color  = isActive ? activePortraitColor : inactivePortraitColor;
+        img.gameObject.SetActive(true);
     }
 
     private IEnumerator TypewriterEffect(string text)
@@ -284,6 +349,8 @@ public class DialogManager : MonoBehaviour
 
         if (dialogPanel != null)    dialogPanel.SetActive(false);
         if (nextIndicator != null)  nextIndicator.SetActive(false);
+        if (leftPortrait != null)   leftPortrait.gameObject.SetActive(false);
+        if (rightPortrait != null)  rightPortrait.gameObject.SetActive(false);
         if (hotbarUI != null)       hotbarUI.SetActive(true);
 
         SetPlayerMovement(true);

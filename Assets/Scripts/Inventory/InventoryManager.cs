@@ -26,6 +26,49 @@ public class InventoryManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    void Start()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnCaptureState += CaptureInventory;
+            GameManager.Instance.OnApplyState   += ApplyInventory;
+        }
+    }
+
+    void OnDestroy()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnCaptureState -= CaptureInventory;
+            GameManager.Instance.OnApplyState   -= ApplyInventory;
+        }
+    }
+
+    // ─────────────────────────────────────────
+    // SAVE / LOAD (lewat GameManager)
+    // ─────────────────────────────────────────
+
+    /// <summary>Tulis isi inventory ke SaveData (dipanggil saat menyimpan).</summary>
+    private void CaptureInventory()
+    {
+        var d = GameManager.Instance.Data;
+        d.inventory.Clear();
+        foreach (var kv in counts)
+            d.inventory.Add(new ItemStack(kv.Key, kv.Value));
+    }
+
+    /// <summary>Muat isi inventory dari SaveData (dipanggil saat Continue).</summary>
+    private void ApplyInventory()
+    {
+        var d = GameManager.Instance.Data;
+        counts.Clear();
+        icons.Clear();
+        foreach (var s in d.inventory)
+            if (s != null && !string.IsNullOrEmpty(s.itemName) && s.amount > 0)
+                counts[s.itemName] = s.amount;
+        OnInventoryChanged?.Invoke();
+    }
+
     // ─────────────────────────────────────────
     // PUBLIC API
     // ─────────────────────────────────────────

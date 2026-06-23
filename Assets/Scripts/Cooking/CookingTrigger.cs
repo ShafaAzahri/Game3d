@@ -12,6 +12,9 @@ using UnityEngine;
 /// </summary>
 public class CookingTrigger : MonoBehaviour
 {
+    /// <summary>Event global: dipanggil saat buku resep / panel memasak dibuka (untuk tutorial/quest).</summary>
+    public static event System.Action OnAnyOpened;
+
     [Header("UI References")]
     [Tooltip("Drag 'PromptMasak' dari Hierarchy ke sini")]
     public GameObject promptUI;
@@ -49,6 +52,7 @@ public class CookingTrigger : MonoBehaviour
     void OpenCooking()
     {
         isOpen = true;
+        OnAnyOpened?.Invoke();
 
         if (cookingCanvas != null)
             cookingCanvas.SetActive(true);

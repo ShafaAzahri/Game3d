@@ -12,6 +12,11 @@ using UnityEngine;
 /// </summary>
 public class NPCDialog : MonoBehaviour
 {
+    [Header("Identitas NPC")]
+    [Tooltip("ID NPC untuk dicocokkan oleh QuestManager pada objektif 'talk'. " +
+             "Contoh: 'Nenek', 'Laras', 'Nisa', 'Sekar', 'Bahri', 'Ratri', 'Darma', 'Darsono'.")]
+    public string npcId = "Nenek";
+
     [Header("Dialog Content")]
     [Tooltip("Daftar baris dialog. Gunakan isPlayerLine=true untuk baris MC/Player.")]
     public DialogLine[] dialogLines = new DialogLine[]
@@ -57,8 +62,33 @@ public class NPCDialog : MonoBehaviour
     [Tooltip("Radius interaksi dalam meter")]
     public float interactRadius = 3f;
 
+    [Header("Portrait Siluet (Visual Novel)")]
+    [Tooltip("Siluet NPC ini (tampil di KANAN saat NPC TIDAK sedang bicara).")]
+    public Sprite npcSilhouette;
+    [Tooltip("Siluet Player/MC (tampil di KIRI saat MC TIDAK sedang bicara).")]
+    public Sprite playerSilhouette;
+
     private bool playerInRange = false;
     private Transform playerTransform;
+
+    /// <summary>True setelah pemain selesai ngobrol dengan NPC ini minimal sekali.</summary>
+    public bool HasTalked { get; private set; }
+
+    /// <summary>Dipanggil sekali saat dialog NPC ini pertama kali selesai.</summary>
+    public event System.Action OnTalked;
+
+    private void HandleDialogComplete()
+    {
+        if (!HasTalked)
+        {
+            HasTalked = true;
+            OnTalked?.Invoke();
+        }
+
+        // Lapor ke QuestManager — objektif 'talk' dengan param = npcId akan maju.
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.NotifyTalked(npcId);
+    }
 
     void Start()
     {
@@ -80,8 +110,11 @@ public class NPCDialog : MonoBehaviour
 
         if (playerInRange && Input.GetKeyDown(KeyCode.G))
         {
-            if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogActive)
-                DialogManager.Instance.StartDialog(dialogLines);
+            if (!HasTalked && DialogManager.Instance != null && !DialogManager.Instance.IsDialogActive)
+            {
+                DialogManager.Instance.SetPortraitSilhouettes(playerSilhouette, npcSilhouette);
+                DialogManager.Instance.StartDialog(dialogLines, HandleDialogComplete);
+            }
         }
     }
 
@@ -89,13 +122,17 @@ public class NPCDialog : MonoBehaviour
     public void ForceStartDialog()
     {
         if (DialogManager.Instance != null && !DialogManager.Instance.IsDialogActive)
-            DialogManager.Instance.StartDialog(dialogLines);
+        {
+            DialogManager.Instance.SetPortraitSilhouettes(playerSilhouette, npcSilhouette);
+            DialogManager.Instance.StartDialog(dialogLines, HandleDialogComplete);
+        }
     }
 
     private void UpdatePrompt()
     {
         if (DialogManager.Instance == null) return;
-        DialogManager.Instance.ShowInteractPrompt(playerInRange);
+        // Sembunyikan prompt kalau sudah pernah ngobrol
+        DialogManager.Instance.ShowInteractPrompt(playerInRange && !HasTalked);
     }
 
     private void CachePlayer()

@@ -139,3 +139,7 @@ Desktop.ini
 # Terrain layer and lighting data (auto-generated, can be large)
 /[Aa]ssets/**/*.terrainlayer
 /[Aa]ssets/**/LightingData.asset
+
+# File model besar yang melebihi batas GitHub (disimpan manual di luar git)
+Assets/Map/crimson_tile_cottage.fbx
+Assets/Map/crimson_tile_cottage.fbx.meta

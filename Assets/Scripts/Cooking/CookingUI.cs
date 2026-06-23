@@ -15,6 +15,9 @@ using System.Collections.Generic;
 /// </summary>
 public class CookingUI : MonoBehaviour
 {
+    /// <summary>Event global: dipanggil saat sebuah resep berhasil dimasak (membawa recipeName).</summary>
+    public static event System.Action<string> OnAnyCooked;
+
     [Header("Recipes Data")]
     public CookingRecipe[] recipes;
 
@@ -437,6 +440,7 @@ public class CookingUI : MonoBehaviour
 
         // 4. Tampilkan pesan sukses
         ShowStatus("Berhasil memasak " + recipe.recipeName + "! (+" + recipe.hpRestore + " HP)", true);
+        OnAnyCooked?.Invoke(recipe.recipeName);
 
         // 5. Update tampilan ingredient (stok berubah)
         UpdateIngredients(recipe);

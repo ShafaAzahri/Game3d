@@ -19,4 +19,7 @@ public class DialogLine
 
     [Tooltip("Centang ini jika yang bicara adalah Player/MC — nama akan berwarna biru muda")]
     public bool isPlayerLine = false;
+
+    [Tooltip("Gambar ekspresi/portrait yang ditampilkan saat baris ini muncul. Boleh dikosongkan — kalau kosong, portrait akan disembunyikan.")]
+    public Sprite expression = null;
 }

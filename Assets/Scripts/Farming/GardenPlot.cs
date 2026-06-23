@@ -24,6 +24,11 @@ public class GardenPlot : MonoBehaviour
 
     public enum PlotState { Empty, Hoed, Planted, Watered, Ready }
 
+    /// <summary>Event global: dipanggil saat ADA tanaman ditanam (membawa plantName) — untuk tutorial/quest.</summary>
+    public static event System.Action<string> OnAnyPlanted;
+    /// <summary>Event global: dipanggil saat ADA panen (membawa nama item hasil) — untuk tutorial/quest.</summary>
+    public static event System.Action<string> OnAnyHarvested;
+
     // ─────────────────────────────────────────────
     // INSPECTOR
     // ─────────────────────────────────────────────
@@ -65,6 +70,24 @@ public class GardenPlot : MonoBehaviour
     // ─────────────────────────────────────────────
     // UNITY LIFECYCLE
     // ─────────────────────────────────────────────
+
+    void OnEnable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnCaptureState += SaveState;
+            GameManager.Instance.OnApplyState   += LoadState;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.OnCaptureState -= SaveState;
+            GameManager.Instance.OnApplyState   -= LoadState;
+        }
+    }
 
     void Start()
     {
@@ -214,6 +237,7 @@ public class GardenPlot : MonoBehaviour
 
         currentPlant = chosen;
         SetState(PlotState.Planted);
+        OnAnyPlanted?.Invoke(chosen.plantName);
         Debug.Log($"[GardenPlot] {name}: {chosen.plantName} ditanam!");
     }
 
@@ -226,6 +250,7 @@ public class GardenPlot : MonoBehaviour
 
     private void Harvest()
     {
+        string harvestedName = currentPlant?.harvestItem?.itemName ?? currentPlant?.plantName ?? "";
         if (currentPlant != null && currentPlant.harvestItem != null && InventoryManager.Instance != null)
         {
             string itemName = currentPlant.harvestItem.itemName;
@@ -246,6 +271,7 @@ public class GardenPlot : MonoBehaviour
         growTimer    = 0f;
         SetState(PlotState.Empty);
         PaintTerrainLayer(grassLayerIndex);
+        OnAnyHarvested?.Invoke(harvestedName);
     }
 
 
@@ -406,33 +432,39 @@ public class GardenPlot : MonoBehaviour
     }
 
     // ─────────────────────────────────────────────
-    // SAVE / LOAD (PlayerPrefs)
+    // SAVE / LOAD (lewat GameManager / SaveData terpusat)
     // ─────────────────────────────────────────────
-
-    private string SaveKey => $"GardenPlot_{gameObject.name}";
 
     private void SaveState()
     {
-        PlayerPrefs.SetInt   (SaveKey + "_state", (int)currentState);
-        PlayerPrefs.SetString(SaveKey + "_plant", currentPlant?.plantName ?? "");
-        PlayerPrefs.SetFloat (SaveKey + "_timer", growTimer);
-        PlayerPrefs.Save();
+        if (GameManager.Instance == null) return;
+
+        var list = GameManager.Instance.Data.plots;
+        var ps = list.Find(p => p.plotId == gameObject.name);
+        if (ps == null)
+        {
+            ps = new PlotSave { plotId = gameObject.name };
+            list.Add(ps);
+        }
+        ps.state     = (int)currentState;
+        ps.plantName = currentPlant != null ? currentPlant.plantName : "";
+        ps.timer     = growTimer;
     }
 
     private void LoadState()
     {
-        if (!PlayerPrefs.HasKey(SaveKey + "_state")) return; // belum pernah disimpan
+        if (GameManager.Instance == null) return;
 
-        int    savedStateInt = PlayerPrefs.GetInt   (SaveKey + "_state", 0);
-        string savedPlant   = PlayerPrefs.GetString (SaveKey + "_plant", "");
-        float  savedTimer   = PlayerPrefs.GetFloat  (SaveKey + "_timer", 0f);
+        var ps = GameManager.Instance.Data.plots.Find(p => p.plotId == gameObject.name);
+        if (ps == null) return; // belum ada data → tetap Empty (New Game bersih)
 
         // Restore tanaman dari nama
-        if (!string.IsNullOrEmpty(savedPlant) && availablePlants != null)
+        currentPlant = null;
+        if (!string.IsNullOrEmpty(ps.plantName) && availablePlants != null)
         {
             foreach (var pd in availablePlants)
             {
-                if (pd != null && pd.plantName == savedPlant)
+                if (pd != null && pd.plantName == ps.plantName)
                 {
                     currentPlant = pd;
                     break;
@@ -440,33 +472,23 @@ public class GardenPlot : MonoBehaviour
             }
         }
 
-        growTimer    = savedTimer;
-        currentState = (PlotState)savedStateInt;
+        growTimer    = ps.timer;
+        currentState = (PlotState)ps.state;
 
         // Repaint tanah jika sudah dicangkul
         if (currentState >= PlotState.Hoed)
             PaintTerrainLayer(soilLayerIndex);
 
         // Spawn prefab jika sudah siap panen
+        if (spawnedPlant != null) { Destroy(spawnedPlant); spawnedPlant = null; }
         if (currentState == PlotState.Ready && currentPlant?.grownPrefab != null)
         {
             Vector3 spawnPos = transform.position + Vector3.up * currentPlant.spawnHeight;
             spawnedPlant = Instantiate(currentPlant.grownPrefab, spawnPos, Quaternion.identity, transform);
         }
 
-        Debug.Log($"[GardenPlot] {name}: State dimuat → {currentState} (plant: {savedPlant}, timer: {savedTimer:F1}s)");
+        if (playerInRange) UpdatePrompt();
     }
-
-    /// <summary>Hapus data save plot ini (dipanggil saat panen reset).</summary>
-    private void ClearSave()
-    {
-        PlayerPrefs.DeleteKey(SaveKey + "_state");
-        PlayerPrefs.DeleteKey(SaveKey + "_plant");
-        PlayerPrefs.DeleteKey(SaveKey + "_timer");
-        PlayerPrefs.Save();
-    }
-
-    void OnApplicationQuit() => SaveState();
 
     // ─────────────────────────────────────────────
     // GIZMOS (Editor)
