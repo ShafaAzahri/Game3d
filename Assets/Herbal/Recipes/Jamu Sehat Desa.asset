@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Sehat Desa
   description: Jamu pamungkas untuk pemulihan kondisi tubuh secara umum.
   recipeImage: {fileID: 21300000, guid: 2f3088cd18c925f4089c78909f6c2bbd, type: 3}
+  unlockId: level2
   resultItem: {fileID: 11400000, guid: bcd7d018cf38b82478714ca0c1162bd2, type: 2}
   hpRestore: 50
   ingredients:

@@ -215,6 +215,8 @@ public class CookingUI : MonoBehaviour
 
     GameObject CreateRecipeButton(RectTransform parent, CookingRecipe recipe)
     {
+        bool locked = IsRecipeLocked(recipe);
+
         GameObject btnObj = new GameObject("RecipeBtn_" + recipe.recipeName);
         btnObj.transform.SetParent(parent, false);
 
@@ -257,10 +259,14 @@ public class CookingUI : MonoBehaviour
         {
             recipeImg.sprite = recipe.recipeImage;
             recipeImg.preserveAspect = true;
+            // Resep terkunci → tampil siluet gelap
+            recipeImg.color = locked ? new Color(0.1f, 0.1f, 0.12f, 1f) : Color.white;
         }
         else
         {
-            recipeImg.color = new Color(0.45f, 0.42f, 0.4f, 1f);
+            recipeImg.color = locked
+                ? new Color(0.1f, 0.1f, 0.12f, 1f)
+                : new Color(0.45f, 0.42f, 0.4f, 1f);
         }
 
         // ===== Bar nama (gradient hitam di bawah) =====
@@ -284,7 +290,7 @@ public class CookingUI : MonoBehaviour
         textRect.offsetMin = Vector2.zero;
         textRect.offsetMax = Vector2.zero;
         Text text = textObj.AddComponent<Text>();
-        text.text = recipe.recipeName;
+        text.text = locked ? "???" : recipe.recipeName;
         text.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
         text.fontSize = 12;
         text.alignment = TextAnchor.MiddleCenter;
@@ -299,6 +305,60 @@ public class CookingUI : MonoBehaviour
         textOutline.effectColor = new Color(0, 0, 0, 0.7f);
         textOutline.effectDistance = new Vector2(1, -1);
 
+        // ===== Overlay GEMBOK untuk resep terkunci =====
+        if (locked)
+        {
+            // Lapisan gelap menutupi seluruh inner
+            GameObject overlay = new GameObject("LockOverlay");
+            overlay.transform.SetParent(innerObj.transform, false);
+            RectTransform ovRect = overlay.AddComponent<RectTransform>();
+            ovRect.anchorMin = Vector2.zero;
+            ovRect.anchorMax = Vector2.one;
+            ovRect.offsetMin = Vector2.zero;
+            ovRect.offsetMax = Vector2.zero;
+            Image ovImg = overlay.AddComponent<Image>();
+            ovImg.color = new Color(0f, 0f, 0f, 0.55f);
+            ovImg.raycastTarget = false;
+
+            // Ikon gembok (glyph) di tengah
+            GameObject lockObj = new GameObject("LockIcon");
+            lockObj.transform.SetParent(overlay.transform, false);
+            RectTransform lockRect = lockObj.AddComponent<RectTransform>();
+            lockRect.anchorMin = new Vector2(0.25f, 0.35f);
+            lockRect.anchorMax = new Vector2(0.75f, 0.9f);
+            lockRect.offsetMin = Vector2.zero;
+            lockRect.offsetMax = Vector2.zero;
+            Text lockTxt = lockObj.AddComponent<Text>();
+            lockTxt.text = "\uD83D\uDD12";   // 🔒 (fallback ke kotak bila font tak punya glyph)
+            lockTxt.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            lockTxt.fontSize = 28;
+            lockTxt.alignment = TextAnchor.MiddleCenter;
+            lockTxt.color = new Color(1f, 0.85f, 0.4f, 1f);
+            lockTxt.resizeTextForBestFit = true;
+            lockTxt.resizeTextMinSize = 10;
+            lockTxt.resizeTextMaxSize = 40;
+            lockTxt.raycastTarget = false;
+
+            // Label "TERKUNCI" kecil sebagai jaminan keterbacaan
+            GameObject lblObj = new GameObject("LockLabel");
+            lblObj.transform.SetParent(overlay.transform, false);
+            RectTransform lblRect = lblObj.AddComponent<RectTransform>();
+            lblRect.anchorMin = new Vector2(0.05f, 0.05f);
+            lblRect.anchorMax = new Vector2(0.95f, 0.3f);
+            lblRect.offsetMin = Vector2.zero;
+            lblRect.offsetMax = Vector2.zero;
+            Text lbl = lblObj.AddComponent<Text>();
+            lbl.text = "TERKUNCI";
+            lbl.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            lbl.fontSize = 10;
+            lbl.alignment = TextAnchor.MiddleCenter;
+            lbl.color = new Color(1f, 0.85f, 0.4f, 1f);
+            lbl.resizeTextForBestFit = true;
+            lbl.resizeTextMinSize = 6;
+            lbl.resizeTextMaxSize = 12;
+            lbl.raycastTarget = false;
+        }
+
         return btnObj;
     }
 
@@ -310,25 +370,52 @@ public class CookingUI : MonoBehaviour
         selectedIndex = index;
         CookingRecipe recipe = recipes[index];
 
+        bool locked = IsRecipeLocked(recipe);
+
         if (recipeName != null)
-            recipeName.text = recipe.recipeName;
+            recipeName.text = locked ? "??? (Terkunci)" : recipe.recipeName;
 
         if (recipeDescription != null)
-            recipeDescription.text = recipe.description;
+            recipeDescription.text = locked
+                ? "Resep ini belum terbuka. Lanjutkan cerita untuk mempelajarinya."
+                : recipe.description;
 
         if (recipeImage != null && recipe.recipeImage != null)
+        {
             recipeImage.sprite = recipe.recipeImage;
+            recipeImage.color  = locked ? new Color(0.12f, 0.12f, 0.14f, 1f) : Color.white;
+        }
 
         if (hpRestoreText != null)
-            hpRestoreText.text = "\u2665 Memulihkan " + recipe.hpRestore + " HP";
+            hpRestoreText.text = locked ? "" : "\u2665 Memulihkan " + recipe.hpRestore + " HP";
 
-        UpdateIngredients(recipe);
+        // Tombol masak dimatikan untuk resep terkunci
+        if (cookButton != null) cookButton.interactable = !locked;
+
+        UpdateIngredients(locked ? null : recipe);
         HighlightButton(index);
+    }
+
+    /// <summary>True kalau resep punya unlockId dan id tsb belum ter-unlock di SaveData.</summary>
+    private bool IsRecipeLocked(CookingRecipe recipe)
+    {
+        if (recipe == null) return false;
+        if (string.IsNullOrEmpty(recipe.unlockId)) return false;
+        if (GameManager.Instance == null) return false;   // editor/test tanpa save → anggap terbuka
+        return !GameManager.Instance.Data.IsRecipeUnlocked(recipe.unlockId);
     }
 
     void UpdateIngredients(CookingRecipe recipe)
     {
         if (ingredientSlots == null) return;
+
+        // Resep terkunci / null → sembunyikan semua slot bahan
+        if (recipe == null)
+        {
+            for (int i = 0; i < ingredientSlots.Length; i++)
+                if (ingredientSlots[i] != null) ingredientSlots[i].SetActive(false);
+            return;
+        }
 
         for (int i = 0; i < ingredientSlots.Length; i++)
         {
@@ -403,6 +490,13 @@ public class CookingUI : MonoBehaviour
 
         CookingRecipe recipe = recipes[selectedIndex];
 
+        // Resep terkunci tidak bisa dimasak
+        if (IsRecipeLocked(recipe))
+        {
+            ShowStatus("Resep belum terbuka! Lanjutkan cerita dulu.", false);
+            return;
+        }
+
         if (InventoryManager.Instance == null)
         {
             ShowStatus("Inventory tidak ditemukan!", false);
@@ -439,7 +533,7 @@ public class CookingUI : MonoBehaviour
         }
 
         // 4. Tampilkan pesan sukses
-        ShowStatus("Berhasil memasak " + recipe.recipeName + "! (+" + recipe.hpRestore + " HP)", true);
+        ShowStatus("Berhasil memasak " + recipe.recipeName + "! Masuk ke tas.", true);
         OnAnyCooked?.Invoke(recipe.recipeName);
 
         // 5. Update tampilan ingredient (stok berubah)

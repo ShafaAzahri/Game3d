@@ -35,10 +35,25 @@ public class CowAI : MonoBehaviour
     private Vector3 targetPosition;
 
     private bool isMoving = false;
+    private float calculatedOffset = 0f;
 
     void Start()
     {
         startPosition = transform.position;
+
+        // Hitung offset dari collider sekali saja di Start untuk mencegah bug posisi melayang
+        if (heightOffset == 0f)
+        {
+            Collider col = GetComponent<Collider>();
+            if (col != null)
+            {
+                calculatedOffset = col.bounds.extents.y;
+            }
+        }
+        else
+        {
+            calculatedOffset = heightOffset;
+        }
 
         SetNextAction();
         ChooseAction();
@@ -48,7 +63,7 @@ public class CowAI : MonoBehaviour
     {
         timer += Time.deltaTime;
 
-        // Always snap to ground (even when idle)
+        // Selalu kunci posisi ke tanah (bahkan saat diam)
         SnapToGround();
 
         if (isMoving)
@@ -70,15 +85,7 @@ public class CowAI : MonoBehaviour
         {
             float terrainY = activeTerrain.SampleHeight(transform.position) + activeTerrain.transform.position.y;
             
-            // Auto-calculate offset from collider bounds (feet position)
-            float offset = heightOffset;
-            Collider col = GetComponent<Collider>();
-            if (col != null && offset == 0f)
-            {
-                offset = col.bounds.extents.y;
-            }
-            
-            terrainY += offset;
+            terrainY += calculatedOffset;
             Vector3 pos = transform.position;
             pos.y = Mathf.Lerp(pos.y, terrainY, 15f * Time.deltaTime);
             transform.position = pos;
@@ -108,14 +115,12 @@ public class CowAI : MonoBehaviour
     void Idle()
     {
         isMoving = false;
-
         animator.SetFloat("speed", 0f);
     }
 
     void IdleVariation()
     {
         isMoving = false;
-
         animator.SetFloat("speed", 0f);
         animator.SetTrigger("idleVariant");
     }
@@ -123,9 +128,7 @@ public class CowAI : MonoBehaviour
     void Walk()
     {
         isMoving = true;
-
         animator.SetFloat("speed", 1f);
-
         SetRandomTarget();
     }
 
@@ -135,12 +138,8 @@ public class CowAI : MonoBehaviour
         {
             Vector2 randomCircle = Random.insideUnitCircle * moveRadius;
 
-            Vector3 candidateTarget =
-                startPosition +
-                new Vector3(randomCircle.x, 0, randomCircle.y);
-
-            Vector3 direction =
-                (candidateTarget - transform.position).normalized;
+            Vector3 candidateTarget = startPosition + new Vector3(randomCircle.x, 0, randomCircle.y);
+            Vector3 direction = (candidateTarget - transform.position).normalized;
 
             // CEK PAGAR / TEMBOK
             bool hitObstacle = Physics.Raycast(
@@ -163,13 +162,11 @@ public class CowAI : MonoBehaviour
 
     void MoveToTarget()
     {
-        Vector3 direction =
-            (targetPosition - transform.position).normalized;
+        Vector3 direction = (targetPosition - transform.position).normalized;
 
         // =========================
         // CEK PAGAR
         // =========================
-
         bool hitObstacle = Physics.Raycast(
             transform.position + Vector3.up * 0.5f,
             direction,
@@ -186,7 +183,6 @@ public class CowAI : MonoBehaviour
         // =========================
         // AVOID SAPI LAIN
         // =========================
-
         Collider[] nearbyCows = Physics.OverlapSphere(
             transform.position,
             avoidDistance,
@@ -200,32 +196,27 @@ public class CowAI : MonoBehaviour
             if (cow.gameObject == gameObject)
                 continue;
 
-            Vector3 pushDir =
-                transform.position - cow.transform.position;
-
-            float distance =
-                Vector3.Distance(transform.position, cow.transform.position);
+            Vector3 pushDir = transform.position - cow.transform.position;
+            float distance = Vector3.Distance(transform.position, cow.transform.position);
 
             // makin dekat makin kuat dorongannya
             float forceMultiplier = 1f / Mathf.Max(distance, 0.1f);
-
-            avoidDirection +=
-                pushDir.normalized * forceMultiplier;
+            avoidDirection += pushDir.normalized * forceMultiplier;
         }
 
         direction += avoidDirection * avoidForce;
 
+        // --- FIX TERBANGNYA DI SINI ---
+        // Kunci sumbu Y ke 0 agar kalkulasi arah tidak membuat sapi bergerak ke atas langit
+        direction.y = 0f; 
         direction.Normalize();
 
         // =========================
         // ROTATE
         // =========================
-
         if (direction != Vector3.zero)
         {
-            Quaternion lookRotation =
-                Quaternion.LookRotation(direction);
-
+            Quaternion lookRotation = Quaternion.LookRotation(direction);
             transform.rotation = Quaternion.Slerp(
                 transform.rotation,
                 lookRotation,
@@ -236,28 +227,25 @@ public class CowAI : MonoBehaviour
         // =========================
         // MOVE
         // =========================
-
         Vector3 nextPos = transform.position + direction * moveSpeed * Time.deltaTime;
 
         // =========================
         // GROUND CHECK (snap to terrain)
         // =========================
-
-        // Method 1: Use Terrain.SampleHeight (always works with terrain)
         Terrain activeTerrain = Terrain.activeTerrain;
         if (activeTerrain != null)
         {
-            float terrainY = activeTerrain.SampleHeight(nextPos) + activeTerrain.transform.position.y + heightOffset;
+            float terrainY = activeTerrain.SampleHeight(nextPos) + activeTerrain.transform.position.y + calculatedOffset;
             nextPos.y = Mathf.Lerp(transform.position.y, terrainY, 10f * Time.deltaTime);
         }
         else
         {
-            // Fallback: Raycast for non-terrain ground
+            // Fallback: Raycast untuk area non-terrain ground
             Ray groundRay = new Ray(nextPos + Vector3.up * 5f, Vector3.down);
             RaycastHit groundHit;
             if (Physics.Raycast(groundRay, out groundHit, groundCheckDistance, groundLayer))
             {
-                nextPos.y = Mathf.Lerp(transform.position.y, groundHit.point.y + heightOffset, 10f * Time.deltaTime);
+                nextPos.y = Mathf.Lerp(transform.position.y, groundHit.point.y + calculatedOffset, 10f * Time.deltaTime);
             }
         }
 
@@ -266,9 +254,7 @@ public class CowAI : MonoBehaviour
         // =========================
         // SAMPAI TUJUAN
         // =========================
-
-        if (Vector3.Distance(transform.position, targetPosition)
-            <= stopDistance)
+        if (Vector3.Distance(transform.position, targetPosition) <= stopDistance)
         {
             Idle();
         }
@@ -277,15 +263,12 @@ public class CowAI : MonoBehaviour
     void SetNextAction()
     {
         timer = 0;
-
-        currentActionTime =
-            Random.Range(minActionTime, maxActionTime);
+        currentActionTime = Random.Range(minActionTime, maxActionTime);
     }
 
     // =========================
     // DEBUG GIZMOS
     // =========================
-
     void OnDrawGizmos()
     {
         if (!Application.isPlaying)
@@ -293,7 +276,6 @@ public class CowAI : MonoBehaviour
 
         // obstacle ray
         Gizmos.color = Color.red;
-
         Gizmos.DrawRay(
             transform.position + Vector3.up * 0.5f,
             transform.forward * obstacleCheckDistance
@@ -301,7 +283,6 @@ public class CowAI : MonoBehaviour
 
         // avoidance radius
         Gizmos.color = Color.yellow;
-
         Gizmos.DrawWireSphere(
             transform.position,
             avoidDistance
@@ -309,7 +290,6 @@ public class CowAI : MonoBehaviour
 
         // target
         Gizmos.color = Color.green;
-
         Gizmos.DrawSphere(targetPosition, 0.2f);
     }
 }

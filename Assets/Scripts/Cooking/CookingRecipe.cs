@@ -7,6 +7,11 @@ public class CookingRecipe : ScriptableObject
     public string description;
     public Sprite recipeImage;
 
+    [Header("Unlock")]
+    [Tooltip("Kosong = resep selalu terbuka. Kalau diisi (mis. 'level1','level2','level3'), " +
+             "resep TERKUNCI sampai id tsb ter-unlock lewat progres cerita (QuestManager reward).")]
+    public string unlockId;
+
     [Header("Result")]
     [Tooltip("Item hasil masakan yang masuk inventory. Jika null, akan pakai recipeName & recipeImage.")]
     public InventoryItem resultItem;

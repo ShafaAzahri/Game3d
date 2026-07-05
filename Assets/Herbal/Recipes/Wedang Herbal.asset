@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Wedang Herbal
   description: Minuman hangat untuk mengusir masuk angin.
   recipeImage: {fileID: 21300000, guid: 187eba50ad68ec0469205bf33326fbb2, type: 3}
+  unlockId: level1
   resultItem: {fileID: 11400000, guid: e2d1cca1152d4d24caf186748e21772f, type: 2}
   hpRestore: 20
   ingredients:

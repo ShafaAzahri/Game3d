@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 /// <summary>
 /// Wadah SEMUA data yang disimpan ke file save (JSON).
@@ -42,6 +43,9 @@ public class SaveData
     // ── Resep yang sudah dibuka ──
     public List<string> unlockedRecipes = new List<string>();
 
+    // ── Quest counters (paralel quest) ──
+    public SerializableDictionary questCounters = new SerializableDictionary();
+
     // ─────────────────────────────────────────────────────────────
     // FACTORY
     // ─────────────────────────────────────────────────────────────
@@ -62,7 +66,8 @@ public class SaveData
             inventory         = new List<ItemStack>(),
             plots             = new List<PlotSave>(),
             unlockedRecipes   = new List<string>(),
-            completedSteps    = new List<string>()
+            completedSteps    = new List<string>(),
+            questCounters     = new SerializableDictionary()
         };
     }
 
@@ -108,4 +113,47 @@ public class PlotSave
     public int    state;        // (int) GardenPlot.PlotState
     public string plantName;    // nama tanaman yang sedang tumbuh ("" kalau kosong)
     public float  timer;        // progress tumbuh (detik)
+}
+
+
+/// <summary>Dictionary string→int yang bisa diserialisasi JSON (untuk quest counters).</summary>
+[Serializable]
+public class SerializableDictionary : ISerializationCallbackReceiver
+{
+    [SerializeField] private List<string> keys = new List<string>();
+    [SerializeField] private List<int> values = new List<int>();
+
+    private Dictionary<string, int> dict = new Dictionary<string, int>();
+
+    public int this[string key]
+    {
+        get => dict.ContainsKey(key) ? dict[key] : 0;
+        set => dict[key] = value;
+    }
+
+    public bool ContainsKey(string key) => dict.ContainsKey(key);
+
+    public Dictionary<string, int>.Enumerator GetEnumerator() => dict.GetEnumerator();
+
+    // Tambah property Key & Value agar bisa di-foreach
+    public string Key { get; private set; }
+    public int Value { get; private set; }
+
+    public void OnBeforeSerialize()
+    {
+        keys.Clear();
+        values.Clear();
+        foreach (var kv in dict)
+        {
+            keys.Add(kv.Key);
+            values.Add(kv.Value);
+        }
+    }
+
+    public void OnAfterDeserialize()
+    {
+        dict = new Dictionary<string, int>();
+        for (int i = 0; i < Mathf.Min(keys.Count, values.Count); i++)
+            dict[keys[i]] = values[i];
+    }
 }

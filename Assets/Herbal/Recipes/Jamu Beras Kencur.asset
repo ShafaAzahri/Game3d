@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Beras Kencur
   description: Jamu beras kencur campuran herbal, sangat berkhasiat.
   recipeImage: {fileID: 21300000, guid: f53e774b431da55459b2b6d39227542f, type: 3}
+  unlockId: level1
   resultItem: {fileID: 11400000, guid: 74bf27de696eb9049956c86e69dab220, type: 2}
   hpRestore: 40
   ingredients:

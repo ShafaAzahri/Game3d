@@ -15,6 +15,9 @@ public class CookingTrigger : MonoBehaviour
     /// <summary>Event global: dipanggil saat buku resep / panel memasak dibuka (untuk tutorial/quest).</summary>
     public static event System.Action OnAnyOpened;
 
+    /// <summary>True selama ada panel memasak yang sedang terbuka (dipakai QuestManager untuk hide objektif).</summary>
+    public static bool IsAnyOpen { get; private set; }
+
     [Header("UI References")]
     [Tooltip("Drag 'PromptMasak' dari Hierarchy ke sini")]
     public GameObject promptUI;
@@ -52,6 +55,7 @@ public class CookingTrigger : MonoBehaviour
     void OpenCooking()
     {
         isOpen = true;
+        IsAnyOpen = true;
         OnAnyOpened?.Invoke();
 
         if (cookingCanvas != null)
@@ -71,6 +75,7 @@ public class CookingTrigger : MonoBehaviour
     public void CloseCooking()
     {
         isOpen = false;
+        IsAnyOpen = false;
 
         if (cookingCanvas != null)
             cookingCanvas.SetActive(false);

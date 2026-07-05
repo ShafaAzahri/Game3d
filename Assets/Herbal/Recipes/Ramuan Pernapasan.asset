@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Ramuan Pernapasan
   description: Melegakan napas sesak dan tenggorokan.
   recipeImage: {fileID: 21300000, guid: 4bbf635de1b2ef94dbe68b7132c52c5d, type: 3}
+  unlockId: level3
   resultItem: {fileID: 11400000, guid: a88413524af1ca34c938f56305a0f3eb, type: 2}
   hpRestore: 25
   ingredients:

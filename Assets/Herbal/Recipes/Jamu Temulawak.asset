@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Temulawak
   description: Jamu temulawak, meningkatkan stamina.
   recipeImage: {fileID: 21300000, guid: 67fe4caaa5329e1499065f9e1741f0b7, type: 3}
+  unlockId: level1
   resultItem: {fileID: 11400000, guid: 0f9ea750fb584e345864eab464245711, type: 2}
   hpRestore: 25
   ingredients:

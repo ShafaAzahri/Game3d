@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Wedang Jahe
   description: Wedang jahe dengan kayu manis, sangat menghangatkan.
   recipeImage: {fileID: 21300000, guid: 187eba50ad68ec0469205bf33326fbb2, type: 3}
+  unlockId: 
   resultItem: {fileID: 11400000, guid: 201df8484e6ebb4488507198c64812a3, type: 2}
   hpRestore: 35
   ingredients:

@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Ramuan Penurun Panas
   description: Ramuan tradisional ampuh untuk meredakan demam.
   recipeImage: {fileID: 21300000, guid: 536e79026490eb841bd57cec424bbb58, type: 3}
+  unlockId: level2
   resultItem: {fileID: 11400000, guid: 0025a79660545d640b0f1c15d3f35517, type: 2}
   hpRestore: 35
   ingredients:

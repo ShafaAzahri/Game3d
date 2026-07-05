@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Jahe
   description: Jamu jahe hangat, memulihkan tenaga.
   recipeImage: {fileID: 21300000, guid: e31c99b9e30f8694da1c9b4d3206a511, type: 3}
+  unlockId: 
   resultItem: {fileID: 11400000, guid: 974208ec0d8ced2459b74d7d5456306b, type: 2}
   hpRestore: 20
   ingredients:

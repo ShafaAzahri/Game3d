@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Pegal Linu
   description: Cocok untuk meredakan nyeri sendi dan badan pegal.
   recipeImage: {fileID: 21300000, guid: cf9cf478b568bfe4fa168c5a6cc7be24, type: 3}
+  unlockId: level1
   resultItem: {fileID: 11400000, guid: be9d8b5c5c2cf7b4b899f9767bcf0de6, type: 2}
   hpRestore: 30
   ingredients:

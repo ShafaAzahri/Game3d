@@ -15,6 +15,7 @@ MonoBehaviour:
   recipeName: Jamu Kencur
   description: Jamu kencur tradisional, penghilang pegal.
   recipeImage: {fileID: 21300000, guid: 4bbf635de1b2ef94dbe68b7132c52c5d, type: 3}
+  unlockId: level1
   resultItem: {fileID: 11400000, guid: a27247f5a6ca967419ae7b63720e0776, type: 2}
   hpRestore: 20
   ingredients:
