@@ -3286,7 +3286,7 @@ MonoBehaviour:
     m_PersistentCalls:
       m_Calls: []
   m_FontData:
-    m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+    m_Font: {fileID: 12800000, guid: e9d3623199cb3a34197364c4ce3882f9, type: 3}
     m_FontSize: 14
     m_FontStyle: 0
     m_BestFit: 0
@@ -3796,3 +3796,4 @@ SceneRoots:
   - {fileID: 1183468846}
   - {fileID: 757857832}
   - {fileID: 426310938}
+

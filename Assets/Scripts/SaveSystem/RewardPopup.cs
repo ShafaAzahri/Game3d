@@ -30,6 +30,7 @@ public class RewardPopup : MonoBehaviour
     /// <summary>Tampilkan reward. title opsional.</summary>
     public void Show(string body, string title = "REWARD")
     {
+        gameObject.SetActive(true);
         if (titleText != null) titleText.text = title;
         if (bodyText != null) bodyText.text = body;
         StopAllCoroutines();
@@ -39,8 +40,6 @@ public class RewardPopup : MonoBehaviour
     private IEnumerator Routine()
     {
         if (group == null) yield break;
-
-        gameObject.SetActive(true);
 
         // Fade in
         for (float t = 0f; t < fadeIn; t += Time.unscaledDeltaTime)

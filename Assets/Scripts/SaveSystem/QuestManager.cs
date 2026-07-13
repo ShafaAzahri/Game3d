@@ -96,6 +96,7 @@ public class QuestManager : MonoBehaviour
 
     // State
     private int step;
+    public int CurrentStep => step;
     private float moveTimer;
     private bool panelShouldShow = true;
     private Dictionary<string, int> counters = new Dictionary<string, int>();
@@ -123,6 +124,9 @@ public class QuestManager : MonoBehaviour
     private void Start()
     {
         Instance = this;
+        
+        InitializeQuestObjectives();
+
         step = (GameManager.Instance != null) ? GameManager.Instance.Data.storyStep : 0;
 
         // Restore counters dari save
@@ -243,6 +247,7 @@ public class QuestManager : MonoBehaviour
             // Simpan pilihan ke save data
             if (GameManager.Instance != null)
                 GameManager.Instance.Data.MarkStepDone("choice_" + choiceGroup + "_" + chosenOption);
+            
             Advance();
         }
     }
@@ -285,6 +290,14 @@ public class QuestManager : MonoBehaviour
     {
         if (step >= objectives.Length) return;
         var obj = objectives[step];
+
+        // Delegasikan ke NotifyTalked jika step saat ini adalah Talk atau GiveItem
+        if (obj.type == ObjType.Talk || obj.type == ObjType.GiveItem)
+        {
+            NotifyTalked(npcId);
+            return;
+        }
+
         if (obj.type != ObjType.Counter) return;
 
         // Cek item
@@ -331,6 +344,33 @@ public class QuestManager : MonoBehaviour
         RefreshUI();
     }
 
+    public void DebugSetStep(int newStep)
+    {
+        if (newStep < 0 || newStep > objectives.Length) return;
+        
+        int prevStep = step;
+        step = newStep;
+        moveTimer = 0f;
+
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.Data.storyStep = step;
+            GameManager.Instance.SaveGame();
+        }
+
+        // Reset all dialogue flags on all NPCs in scene to ensure they adapt to new step
+        var npcs = Object.FindObjectsByType<NPCDialog>(FindObjectsSortMode.None);
+        foreach (var npc in npcs)
+        {
+            npc.HasTalked = false;
+            npc.canTalkAgain = true;
+        }
+
+        PrepareNextStep();
+        RefreshUI();
+        Debug.Log($"[QuestManager] Debug jump to step {step}.");
+    }
+
     private void GrantObjectiveReward(Objective completed)
     {
         bool gaveSomething = false;
@@ -372,14 +412,18 @@ public class QuestManager : MonoBehaviour
     {
         if (chapterTitleUI == null) return;
 
-        if (fromStep < ch1Start && toStep >= ch1Start)
-            chapterTitleUI.Show("Prolog Selesai", "Chapter 1 Dimulai");
-        else if (fromStep < ch2Start && toStep >= ch2Start)
-            chapterTitleUI.Show("Chapter 1 Selesai", "Chapter 2 Dimulai");
-        else if (fromStep < ch3Start && toStep >= ch3Start)
-            chapterTitleUI.Show("Chapter 2 Selesai", "Chapter 3 Dimulai");
+        if (fromStep < 8 && toStep >= 8)
+            chapterTitleUI.Show("Prolog Selesai", "Chapter 1: Laras & Pak Darma");
+        else if (fromStep < 14 && toStep >= 14)
+            chapterTitleUI.Show("Chapter 1 Selesai", "Chapter 2: Penyelamatan Ratri");
+        else if (fromStep < 19 && toStep >= 19)
+            chapterTitleUI.Show("Chapter 2 Selesai", "Chapter 3: Nelayan Pantai");
+        else if (fromStep < 25 && toStep >= 25)
+            chapterTitleUI.Show("Chapter 3 Selesai", "Chapter 4: Kepala Desa");
+        else if (fromStep < 30 && toStep >= 30)
+            chapterTitleUI.Show("Chapter 4 Selesai", "Chapter 5: Melamar Laras");
         else if (toStep >= objectives.Length)
-            chapterTitleUI.Show("Chapter 3 Selesai", "Terima Kasih Sudah Bermain!");
+            chapterTitleUI.Show("Kisah Cinta Selesai", "Mode Bebas (Freeplay) Dimulai!");
     }
 
     // ─────────────────────────────────────────────────────────────
@@ -399,18 +443,17 @@ public class QuestManager : MonoBehaviour
                 objectiveText.text = "Semua quest selesai! Selamat!";
             else
             {
-                string txt = objectives[step].text;
-                // Inject counter progress
-                if (objectives[step].type == ObjType.Counter)
-                {
-                    int cur = counters.ContainsKey(objectives[step].param) ? counters[objectives[step].param] : 0;
-                    txt += $" ({cur}/{healCounterTarget})";
-                }
-                objectiveText.text = txt;
+                objectiveText.text = objectives[step].text;
             }
         }
 
         if (subText != null && done) subText.text = "";
+
+        // Cari marker secara dinamis saat refresh jika belum ada
+        if (!done && objectives[step].marker == null)
+        {
+            objectives[step].marker = FindMarker(objectives[step].type, objectives[step].param);
+        }
 
         if (questMarker != null)
             questMarker.target = done ? null : objectives[step].marker;
@@ -429,28 +472,21 @@ public class QuestManager : MonoBehaviour
     private void LateUpdate()
     {
         AdjustLinePosition();
+        UpdateDistanceText();
     }
 
-    /// <summary>
-    /// Posisikan garis kuning & subtext tepat di bawah teks objektif,
-    /// mengikuti tinggi teks (1 baris vs 2 baris).
-    /// </summary>
     private void AdjustLinePosition()
     {
         if (objectiveText == null || lineRect == null) return;
 
-        // preferredHeight = tinggi teks yang di-render (termasuk wrap)
         float textHeight = objectiveText.preferredHeight;
 
-        // Ambil posisi Y teks objectif (anchor top)
         var textRect = objectiveText.rectTransform;
         float textY = textRect.anchoredPosition.y;
 
-        // Line muncul tepat di bawah teks + gap kecil
         float lineY = textY - textHeight - lineGap;
         lineRect.anchoredPosition = new Vector2(lineRect.anchoredPosition.x, lineY);
 
-        // SubText di bawah line + 2px
         if (subTextRect != null)
             subTextRect.anchoredPosition = new Vector2(subTextRect.anchoredPosition.x, lineY - 4f);
     }
@@ -476,10 +512,6 @@ public class QuestManager : MonoBehaviour
         if (objectivePanel != null) objectivePanel.SetActive(false);
     }
 
-    /// <summary>
-    /// Siapkan NPC untuk step yang baru aktif.
-    /// Hanya reset NPC yang jadi TARGET step ini agar bisa diajak bicara lagi.
-    /// </summary>
     private void PrepareNextStep()
     {
         if (step >= objectives.Length) return;
@@ -496,50 +528,162 @@ public class QuestManager : MonoBehaviour
         {
             if (npc.npcId != targetNpcId) continue;
 
-            // NPC ini sudah pernah diajak bicara sebelumnya — reset agar bisa lagi
             if (npc.HasTalked)
             {
                 npc.HasTalked = false;
-                npc.canTalkAgain = false; // JANGAN set true — biar cuma bisa 1x per trigger G
+                npc.canTalkAgain = false;
             }
-
-            // Ganti dialog sesuai konteks step
-            SetDialogForStep(npc, targetNpcId);
             break;
         }
     }
 
-    /// <summary>Set dialog khusus per step (mis. Nenek dialog ke-2 kasih bibit).</summary>
-    private void SetDialogForStep(NPCDialog npc, string npcId)
+    private void InitializeQuestObjectives()
     {
-        // Step 3: Nenek kasih bibit
-        if (step == 3 && npcId == "Nenek")
+        var list = new List<Objective>();
+
+        // ─────────────────────────────────────────────────────────────
+        // PROLOG: Belajar Meracik Jamu
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Nenek", text = "Bicara dengan Nenek Rukmini." });
+        list.Add(new Objective { type = ObjType.Move, text = "Gerakkan karaktermu dengan WASD." });
+        list.Add(new Objective { type = ObjType.Hoe, text = "Cangkul plot tanah di kebun." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Nenek", text = "Bicara dengan Nenek Rukmini." });
+        list.Add(new Objective { type = ObjType.OpenBag, text = "Buka tas penyimpananmu dengan menekan tombol [B]." });
+        list.Add(new Objective { type = ObjType.OpenRecipe, text = "Buka buku resep jamumu dengan menekan tombol [Tab]." });
+        list.Add(new Objective { type = ObjType.Cook, param = "Jamu Jahe", text = "Masak Jamu Jahe di tungku masak kebun." });
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Nenek", 
+            itemNeeded = "Jamu Jahe", 
+            text = "Berikan Jamu Jamu Jahe ke Nenek Rukmini.",
+            rewardGold = 100,
+            rewardRecipe = "level1",
+            rewardMessage = "Prolog Selesai! Kamu sekarang paham dasar pembuatan Jamu. Dapatkan +100 Gold!"
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 1: Laras & Pak Darma
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Laras", text = "Bicara dengan Laras di peternakan." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Darma", text = "Temui Pak Darma di rumahnya." });
+        list.Add(new Objective { type = ObjType.OpenRecipe, text = "Buka buku resep [Tab] untuk mempelajari Jamu Pegal Linu." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Nisa", text = "Beli Bibit Temulawak dari Nisa." });
+        list.Add(new Objective { type = ObjType.Cook, param = "Jamu Pegal Linu", text = "Tanam temulawak, panen, lalu masak Jamu Pegal Linu." });
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Darma", 
+            itemNeeded = "Jamu Pegal Linu", 
+            text = "Berikan Jamu Pegal Linu ke Pak Darma.",
+            rewardGold = 150,
+            rewardRecipe = "level2",
+            rewardMessage = "Chapter 1 Selesai! Pak Darma telah sembuh. Resep Jamu Level 2 terbuka!"
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 2: Ratri di Hutan
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Laras", text = "Bicara dengan Laras di peternakan." });
+        list.Add(new Objective { type = ObjType.Move, param = "Hutan", text = "Pergi ke area Hutan perbatasan desa." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Ratri", text = "Bicara dengan Ratri di Hutan." });
+        list.Add(new Objective { type = ObjType.Cook, param = "Ramuan Penurun Panas", text = "Masak Ramuan Penurun Panas di tungku." });
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Ratri", 
+            itemNeeded = "Ramuan Penurun Panas", 
+            text = "Serahkan Ramuan Penurun Panas ke Ratri.",
+            rewardGold = 200,
+            rewardMessage = "Chapter 2 Selesai! Ratri telah sembuh dari demamnya. Dapatkan +200 Gold!"
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 3: Pak Bahri di Pantai
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Ratri", text = "Bicara dengan Ratri di Hutan." });
+        list.Add(new Objective { type = ObjType.Move, param = "Pantai", text = "Pergi ke area Pantai desa." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Istri Nelayan", text = "Tanyakan kondisi Pak Bahri ke istrinya (Sekar) di Pantai." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Bahri", text = "Temui Pak Bahri di gubuknya." });
+        list.Add(new Objective { type = ObjType.Cook, param = "Ramuan Anti Mual", text = "Masak Ramuan Anti Mual di tungku." });
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Bahri", 
+            itemNeeded = "Ramuan Anti Mual", 
+            text = "Serahkan Ramuan Anti Mual ke Pak Bahri.",
+            rewardGold = 250,
+            rewardMessage = "Chapter 3 Selesai! Pak Bahri telah sembuh dari mual-mualnya. Dapatkan +250 Gold!"
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 4: Kepala Desa (Pak Darsono)
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Bahri", text = "Bicara dengan Pak Bahri di Pantai." });
+        list.Add(new Objective { type = ObjType.Move, param = "Balai Desa", text = "Pergi ke Balai Desa." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Darsono", text = "Bicara dengan Kepala Desa (Pak Darsono) di Balai Desa." });
+        list.Add(new Objective { type = ObjType.Cook, param = "Jamu Sehat Desa", text = "Masak Jamu Sehat Desa di tungku." });
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Darsono", 
+            itemNeeded = "Jamu Sehat Desa", 
+            text = "Serahkan Jamu Sehat Desa ke Pak Darsono.",
+            rewardGold = 300,
+            rewardRecipe = "level3",
+            rewardMessage = "Chapter 4 Selesai! Pak Kades telah sembuh. Resep Jamu Level 3 terbuka!"
+        });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 5: Pendekatan Laras (Love Meter)
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { type = ObjType.Talk, param = "Nenek", text = "Bicara dengan Nenek Rukmini tentang masa depanmu." });
+        list.Add(new Objective { type = ObjType.Talk, param = "Laras", text = "Dekati Laras (Gunakan hadiah Pakan Ternak atau Jamu untuk menaikkan hatinya ke warna Merah)." });
+
+        // ─────────────────────────────────────────────────────────────
+        // CHAPTER 6 & 7: Bulu Biru & Lamaran Pernikahan
+        // ─────────────────────────────────────────────────────────────
+        list.Add(new Objective { 
+            type = ObjType.GiveItem, 
+            param = "Laras", 
+            itemNeeded = "Bulu Biru", 
+            text = "Lamar Laras dengan memberikan Bulu Biru di Peternakan (Beli di Toko Nisa seharga 500 G).",
+            rewardTitle = "CONGRATULATIONS",
+            rewardMessage = "Selamat! Kamu telah resmi melamar Laras. Mode Bebas (Freeplay) dan kehidupan rumah tangga baru saja dimulai!"
+        });
+
+        objectives = list.ToArray();
+
+        // Cari marker transform secara dinamis
+        foreach (var obj in objectives)
         {
-            npc.dialogLines = new DialogLine[] {
-                new DialogLine { speakerName = "Nenek Rukmini", subtitle = "Tabib Desa",
-                    text = "Bagus, Cu! Tanahnya sudah siap. Ini bibit Jahe dan Kunyit dari Nenek.", isPlayerLine = false },
-                new DialogLine { speakerName = "Robby", subtitle = "",
-                    text = "Terima kasih, Nek. Ini langsung kutanam?", isPlayerLine = true },
-                new DialogLine { speakerName = "Nenek Rukmini", subtitle = "Tabib Desa",
-                    text = "Nanti dulu. Coba buka tasmu dulu [B], lalu lihat buku resep [Tab].", isPlayerLine = false },
-                new DialogLine { speakerName = "Nenek Rukmini", subtitle = "Tabib Desa",
-                    text = "Di situ ada resep Jamu Jahe. Buatkan Nenek satu ya, Cu.", isPlayerLine = false },
-                new DialogLine { speakerName = "Robby", subtitle = "",
-                    text = "Siap, Nek!", isPlayerLine = true },
-            };
+            obj.marker = FindMarker(obj.type, obj.param);
         }
-        // Step 7: Nenek terima jamu
-        else if (step == 7 && npcId == "Nenek")
+
+        ch1Start = 8;
+        ch2Start = 14;
+        ch3Start = 19;
+    }
+
+    private Transform FindMarker(ObjType type, string param)
+    {
+        if (type == ObjType.Talk || type == ObjType.GiveItem)
         {
-            npc.dialogLines = new DialogLine[] {
-                new DialogLine { speakerName = "Nenek Rukmini", subtitle = "Tabib Desa",
-                    text = "Wah, sudah jadi! Coba Nenek cicipi... Hmm, enak! Kamu berbakat, Cu.", isPlayerLine = false },
-                new DialogLine { speakerName = "Robby", subtitle = "",
-                    text = "Hehe, belajar dari Nenek juga.", isPlayerLine = true },
-                new DialogLine { speakerName = "Nenek Rukmini", subtitle = "Tabib Desa",
-                    text = "Nah, sekarang coba jalan-jalan keliling desa. Siapa tahu ada yang butuh bantuan.", isPlayerLine = false },
-            };
+            return FindNpcTransform(param);
         }
+        
+        if (param == "Hutan") return FindNpcTransform("Ratri");
+        if (param == "Pantai") return FindNpcTransform("Istri Nelayan") ?? FindNpcTransform("Bahri");
+        if (param == "Balai Desa") return FindNpcTransform("Darsono");
+        if (param == "Kebun") return FindNpcTransform("Nenek");
+        if (param == "Toko Nisa") return FindNpcTransform("Nisa");
+        
+        return null;
+    }
+
+    private Transform FindNpcTransform(string npcId)
+    {
+        var npcs = Object.FindObjectsByType<NPCDialog>(FindObjectsSortMode.None);
+        foreach (var npc in npcs)
+        {
+            if (npc.npcId == npcId) return npc.transform;
+        }
+        return null;
     }
 
     private bool Matches(string value)

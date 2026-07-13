@@ -18,6 +18,8 @@ public class ShopUI : MonoBehaviour
 
     [Header("Panel")]
     public GameObject shopPanel;
+    
+    [HideInInspector] public bool isSellingMode = false;
 
     [Header("Item List")]
     public RectTransform listContainer;
@@ -89,17 +91,70 @@ public class ShopUI : MonoBehaviour
             if (go != null) Destroy(go);
         spawnedButtons.Clear();
 
-        if (listContainer == null || shopItems == null) return;
+        if (listContainer == null) return;
 
-        for (int i = 0; i < shopItems.Length; i++)
+        if (isSellingMode)
         {
-            var item = shopItems[i];
-            var btnGO = CreateItemButton(item, i);
-            spawnedButtons.Add(btnGO);
+            if (InventoryManager.Instance == null) return;
+            var items = InventoryManager.Instance.GetAllItems();
+            int index = 0;
+            foreach (var kv in items)
+            {
+                string itemName = kv.Key;
+                int amount = kv.Value;
+                Sprite icon = InventoryManager.Instance.GetIcon(itemName);
+                int price = GetSellPrice(itemName);
+
+                ShopItem tempItem = new ShopItem
+                {
+                    itemName = $"{itemName} (x{amount})",
+                    icon = icon,
+                    price = price,
+                    description = ""
+                };
+
+                var btnGO = CreateItemButton(tempItem, index, true, itemName);
+                spawnedButtons.Add(btnGO);
+                index++;
+            }
+        }
+        else
+        {
+            List<ShopItem> currentShopItems = new List<ShopItem>();
+            if (shopItems != null)
+                currentShopItems.AddRange(shopItems);
+            
+            // Always sell Pakan Ternak (15 G) in Nisa's shop
+            if (!currentShopItems.Exists(x => x.itemName == "Pakan Ternak"))
+            {
+                currentShopItems.Add(new ShopItem {
+                    itemName = "Pakan Ternak",
+                    price = 15,
+                    description = "Pakan bergizi untuk sapi dan hewan ternak lainnya."
+                });
+            }
+
+            // Sell Bulu Biru (500 G) if Quest Step is 30 onwards (Beli Bulu Biru)
+            bool sellBlueFeather = QuestManager.Instance != null && QuestManager.Instance.CurrentStep >= 30;
+            if (sellBlueFeather && !currentShopItems.Exists(x => x.itemName == "Bulu Biru"))
+            {
+                currentShopItems.Add(new ShopItem {
+                    itemName = "Bulu Biru",
+                    price = 500,
+                    description = "Bulu legendaris berwarna biru indah untuk melamar pasangan hidup."
+                });
+            }
+
+            for (int i = 0; i < currentShopItems.Count; i++)
+            {
+                var item = currentShopItems[i];
+                var btnGO = CreateItemButton(item, i, false, null, currentShopItems);
+                spawnedButtons.Add(btnGO);
+            }
         }
     }
 
-    private GameObject CreateItemButton(ShopItem item, int index)
+    private GameObject CreateItemButton(ShopItem item, int index, bool isSell, string sellItemName = null, List<ShopItem> activeBuyList = null)
     {
         var go = new GameObject("ShopItem_" + item.itemName);
         go.transform.SetParent(listContainer, false);
@@ -112,8 +167,18 @@ public class ShopUI : MonoBehaviour
 
         var btn = go.AddComponent<Button>();
         btn.targetGraphic = bg;
-        int idx = index;
-        btn.onClick.AddListener(() => BuyItem(idx));
+        
+        if (isSell)
+        {
+            string nameToSell = sellItemName;
+            btn.onClick.AddListener(() => SellItem(nameToSell));
+        }
+        else
+        {
+            int idx = index;
+            var listToBuy = activeBuyList;
+            btn.onClick.AddListener(() => BuyItemFromList(idx, listToBuy));
+        }
 
         // Icon
         if (item.icon != null)
@@ -131,7 +196,7 @@ public class ShopUI : MonoBehaviour
             iconImg.raycastTarget = false;
         }
 
-        // Name + desc
+        // Name
         var nameGO = new GameObject("Name");
         nameGO.transform.SetParent(go.transform, false);
         var nameRect = nameGO.AddComponent<RectTransform>();
@@ -154,19 +219,19 @@ public class ShopUI : MonoBehaviour
         priceRect.offsetMin = Vector2.zero;
         priceRect.offsetMax = Vector2.zero;
         var priceTMP = priceGO.AddComponent<TextMeshProUGUI>();
-        priceTMP.text = item.price + " G";
+        priceTMP.text = (isSell ? "+" : "") + item.price + " G";
         priceTMP.fontSize = 16;
         priceTMP.alignment = TextAlignmentOptions.MidlineRight;
-        priceTMP.color = new Color(1f, 0.85f, 0.3f);
+        priceTMP.color = isSell ? new Color(0.5f, 1f, 0.5f) : new Color(1f, 0.85f, 0.3f);
         priceTMP.raycastTarget = false;
 
         return go;
     }
 
-    private void BuyItem(int index)
+    private void BuyItemFromList(int index, List<ShopItem> activeList)
     {
-        if (shopItems == null || index < 0 || index >= shopItems.Length) return;
-        var item = shopItems[index];
+        if (activeList == null || index < 0 || index >= activeList.Count) return;
+        var item = activeList[index];
 
         // Cek uang
         if (GameManager.Instance == null) return;
@@ -188,6 +253,59 @@ public class ShopUI : MonoBehaviour
         UpdateMoneyDisplay();
         ShowStatus("Berhasil membeli " + item.itemName + "!", true);
         Debug.Log($"[ShopUI] Bought '{item.itemName}' for {item.price}G");
+    }
+
+    private void BuyItem(int index)
+    {
+        if (shopItems == null || index < 0 || index >= shopItems.Length) return;
+        BuyItemFromList(index, new List<ShopItem>(shopItems));
+    }
+
+    private void SellItem(string itemName)
+    {
+        if (InventoryManager.Instance == null || GameManager.Instance == null) return;
+
+        if (!InventoryManager.Instance.HasItem(itemName, 1))
+        {
+            ShowStatus("Item tidak ditemukan!", false);
+            return;
+        }
+
+        int price = GetSellPrice(itemName);
+
+        // Remove from inventory
+        InventoryManager.Instance.RemoveItem(itemName, 1);
+
+        // Add money
+        GameManager.Instance.Data.money += price;
+        GameManager.Instance.SaveGame();
+
+        UpdateMoneyDisplay();
+        ShowStatus($"Berhasil menjual 1 {itemName} (+{price}G)!", true);
+
+        // Refresh list
+        PopulateItems();
+    }
+
+    public int GetSellPrice(string itemName)
+    {
+        if (itemName.Contains("Bibit") || itemName.Contains("Seed")) return 5;
+        
+        // Hasil panen
+        if (itemName == "Jahe") return 15;
+        if (itemName == "Kunyit") return 15;
+        if (itemName == "Temulawak") return 20;
+        if (itemName == "Kencur") return 20;
+        if (itemName == "Madu" || itemName == "Madu Hutan") return 50;
+        
+        // Jamu
+        if (itemName == "Jamu Jahe") return 40;
+        if (itemName == "Jamu Pegal Linu") return 60;
+        if (itemName == "Ramuan Penurun Panas" || itemName == "Tolak Angin") return 80;
+        if (itemName == "Ramuan Anti Mual" || itemName == "Antimo") return 80;
+        if (itemName == "Jamu Sehat Desa" || itemName == "Jamu Sehat") return 100;
+        
+        return 10; // Default
     }
 
     private void UpdateMoneyDisplay()

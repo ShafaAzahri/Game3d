@@ -20,6 +20,7 @@ public class PlayerController : MonoBehaviour
 
     [Header("Tool")]
     public GameObject hoe;
+    public GameObject axe;
 
     [Header("Ground")]
     public float groundCheckDistance = 8f;
@@ -169,13 +170,17 @@ public class PlayerController : MonoBehaviour
     {
         if (hoe != null)
             hoe.SetActive(true);
+        if (axe != null)
+            axe.SetActive(true);
 
         animator.SetTrigger("Cangkul");
 
-        yield return new WaitForSeconds(1.2f);
+        yield return new WaitForSeconds(2.3f);
 
         if (hoe != null)
             hoe.SetActive(false);
+        if (axe != null)
+            axe.SetActive(false);
     }
 
     // =========================

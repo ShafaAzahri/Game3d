@@ -85,6 +85,9 @@ public class InventoryManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(itemName)) return;
 
+        // Normalisasi nama item Madu Hutan menjadi Madu agar sesuai dengan bahan resep
+        if (itemName == "Madu Hutan") itemName = "Madu";
+
         if (counts.ContainsKey(itemName)) counts[itemName] += amount;
         else                              counts[itemName]  = amount;
 

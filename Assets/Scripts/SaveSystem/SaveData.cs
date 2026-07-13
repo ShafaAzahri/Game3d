@@ -45,6 +45,9 @@ public class SaveData
 
     // ── Quest counters (paralel quest) ──
     public SerializableDictionary questCounters = new SerializableDictionary();
+    
+    // ── Hubungan (Love Meter) ──
+    public int larasLovePoints = 0;
 
     // ─────────────────────────────────────────────────────────────
     // FACTORY
@@ -67,7 +70,8 @@ public class SaveData
             plots             = new List<PlotSave>(),
             unlockedRecipes   = new List<string>(),
             completedSteps    = new List<string>(),
-            questCounters     = new SerializableDictionary()
+            questCounters     = new SerializableDictionary(),
+            larasLovePoints   = 0
         };
     }
 

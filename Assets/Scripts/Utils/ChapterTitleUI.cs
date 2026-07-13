@@ -47,13 +47,24 @@ public class ChapterTitleUI : MonoBehaviour
     /// </summary>
     public void Show(string title, string subtitle = "")
     {
-        if (showCoroutine != null) StopCoroutine(showCoroutine);
-        showCoroutine = StartCoroutine(ShowRoutine(title, subtitle));
+        gameObject.SetActive(true);
+        if (showCoroutine != null)
+        {
+            if (QuestManager.Instance != null) QuestManager.Instance.StopCoroutine(showCoroutine);
+            else if (GameManager.Instance != null) GameManager.Instance.StopCoroutine(showCoroutine);
+            else StopCoroutine(showCoroutine);
+        }
+
+        if (QuestManager.Instance != null)
+            showCoroutine = QuestManager.Instance.StartCoroutine(ShowRoutine(title, subtitle));
+        else if (GameManager.Instance != null)
+            showCoroutine = GameManager.Instance.StartCoroutine(ShowRoutine(title, subtitle));
+        else
+            showCoroutine = StartCoroutine(ShowRoutine(title, subtitle));
     }
 
     private IEnumerator ShowRoutine(string title, string subtitle)
     {
-        gameObject.SetActive(true);
 
         if (titleText != null) titleText.text = title;
         if (subtitleText != null)

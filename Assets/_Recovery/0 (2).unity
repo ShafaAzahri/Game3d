@@ -12708,8 +12708,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Penghuni Desa
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -13810,8 +13810,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Nenek
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14915,7 +14915,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.02, y: 0.88}
   m_AnchorMax: {x: 0.48, y: 0.95}
-  m_AnchoredPosition: {x: 1.6000061, y: -64.899994}
+  m_AnchoredPosition: {x: 1.6000366, y: -64.899994}
   m_SizeDelta: {x: -95.09, y: 34.3771}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1130454313
@@ -15930,8 +15930,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: ...
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -18296,6 +18296,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e893587ac085e0743b2eec005552c498, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
+  npcId: Nenek
+  healItemNeeded: 
   dialogLines:
   - speakerName: Nenek Rukmini
     subtitle: Tabib Desa
@@ -18322,9 +18324,12 @@ MonoBehaviour:
     text: Oke Nek, apa yang perlu aku lakukan?
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 0}
+  shopUI: {fileID: 0}
 --- !u!64 &1430436190
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -20597,8 +20602,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: '[G]  Bicara'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -24624,8 +24629,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u25BC"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

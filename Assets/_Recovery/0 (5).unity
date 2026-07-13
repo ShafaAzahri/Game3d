@@ -1328,6 +1328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Nisa
+  healItemNeeded: 
   dialogLines:
   - speakerName: Nisa
     subtitle: Penjaga Toko
@@ -1356,9 +1357,12 @@ MonoBehaviour:
     text: Makasih, Nisa.
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1 &93294704 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 919132149155446097, guid: a2614da9716b05f4587f67c4302bef2b, type: 3}
@@ -1787,8 +1791,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u25A0"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -5600,82 +5604,103 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::QuestManager
   objectives:
-  - id: move
+  - type: 0
     param: 
+    itemNeeded: 
     text: Gunakan W A S D untuk bergerak
     marker: {fileID: 0}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: talk
+    rewardGold: 0
+  - type: 0
     param: 
+    itemNeeded: 
     text: "Temui Nenek Rukmini \u2014 dekati lalu tekan [G]"
     marker: {fileID: 1430436186}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: plant
+    rewardGold: 0
+  - type: 0
     param: 
+    itemNeeded: 
     text: Tanam tanaman pertamamu ([F] cangkul, [H] pilih bibit, [F] siram)
     marker: {fileID: 1371077592}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: recipe
+    rewardGold: 0
+  - type: 0
     param: 
+    itemNeeded: 
     text: "Buka buku resep di tungku \u2014 tekan [G]"
     marker: {fileID: 1484808535}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: plantNamed
+    rewardGold: 0
+  - type: 0
     param: Jahe
+    itemNeeded: 
     text: 'Chapter 1: Tanam JAHE di kebun'
     marker: {fileID: 1371077592}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: plantNamed
+    rewardGold: 0
+  - type: 0
     param: Kunyit
+    itemNeeded: 
     text: 'Chapter 1: Tanam KUNYIT di kebun'
     marker: {fileID: 348230940}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: harvest
+    rewardGold: 0
+  - type: 0
     param: 
+    itemNeeded: 
     text: 'Chapter 1: Panen tanaman pertamamu'
     marker: {fileID: 1371077592}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
-  - id: cook
+    rewardGold: 0
+  - type: 0
     param: 
+    itemNeeded: 
     text: 'Chapter 1: Buat jamu pertama bersama Nenek di tungku'
     marker: {fileID: 1484808535}
     rewardRecipe: 
     rewardUnlockObject: {fileID: 0}
     rewardMessage: 
     rewardTitle: 
+    rewardGold: 0
   objectivePanel: {fileID: 954692768}
   objectiveText: {fileID: 1485928097}
   subText: {fileID: 716049886}
-  completeText: Chapter 1 selesai! Kebun nenek kini hidup kembali.
+  lineRect: {fileID: 0}
+  subTextRect: {fileID: 0}
+  lineGap: 4
+  chapterTitleUI: {fileID: 0}
   questMarker: {fileID: 472243798}
-  nenek: {fileID: 1430436189}
+  ch1Start: 7
+  ch2Start: 13
+  ch3Start: 16
+  healCounterTarget: 3
+  moveDurationNeeded: 1.2
   rewardRecipes:
   - level1
   unlockInventoryObject: {fileID: 0}
   unlockGardenObject: {fileID: 0}
-  rewardMessage: "Buku Resep Lv.1 terbuka \u2022 Inventory aktif \u2022 Kebun terbuka!"
-  moveDurationNeeded: 1.2
 --- !u!4 &407759375
 Transform:
   m_ObjectHideFlags: 0
@@ -6843,6 +6868,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Bahri
+  healItemNeeded: 
   dialogLines:
   - speakerName: Pak Bahri
     subtitle: Nelayan
@@ -6871,9 +6897,12 @@ MonoBehaviour:
     text: Hati-hati, Nak. Kalau sungai sakit, cepat atau lambat desa ikut sakit.
     isPlayerLine: 0
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1 &494029721
 GameObject:
   m_ObjectHideFlags: 0
@@ -9498,8 +9527,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: 
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -10315,6 +10344,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Darsono
+  healItemNeeded: 
   dialogLines:
   - speakerName: Pak Darsono
     subtitle: Kepala Desa
@@ -10349,9 +10379,12 @@ MonoBehaviour:
     text: Kita rawat desa ini sama-sama, Pak. Mulai dari Bapak sembuh dulu.
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1 &791456140 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4309791294964500385, guid: a2614da9716b05f4587f67c4302bef2b, type: 3}
@@ -13292,6 +13325,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Ratri
+  healItemNeeded: 
   dialogLines:
   - speakerName: Ratri
     subtitle: Pemburu
@@ -13324,9 +13358,12 @@ MonoBehaviour:
     text: Di desa ini nggak ada yang asing. Tunggu di sini, aku racikkan.
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1001 &937324338
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -14172,8 +14209,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Penghuni Desa
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -14939,8 +14976,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: REWARD
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -15411,8 +15448,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Nenek
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -15909,6 +15946,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Seno
+  healItemNeeded: 
   dialogLines:
   - speakerName: Pak Seno
     subtitle: Pemilik Toko
@@ -15931,9 +15969,12 @@ MonoBehaviour:
     text: Nanti aku bikinin jamu buat Bapak juga.
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1001 &1105568030
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -17562,8 +17603,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: ...
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -17699,8 +17740,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: ...
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -20133,6 +20174,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Nenek
+  healItemNeeded: 
   dialogLines:
   - speakerName: Nenek Rukmini
     subtitle: Tabib Desa
@@ -20159,9 +20201,12 @@ MonoBehaviour:
     text: Oke Nek, apa yang perlu aku lakukan?
     isPlayerLine: 1
     expression: {fileID: 21300000, guid: dd733666d66005042b58c6ef4a501317, type: 3}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 21300000, guid: 851661b9abfe4dc4587bf5786263ee8a, type: 3}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!64 &1430436190
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -21020,8 +21065,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Temui Nenek Rukmini
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -21993,6 +22038,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Laras
+  healItemNeeded: 
   dialogLines:
   - speakerName: Laras
     subtitle: Peternak Desa
@@ -22027,9 +22073,12 @@ MonoBehaviour:
     text: Tenang. Bapakmu pasti sembuh.
     isPlayerLine: 1
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!136 &1590936354
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -22878,8 +22927,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: '[G]  Bicara'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -25856,6 +25905,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NPCDialog
   npcId: Darma
+  healItemNeeded: 
   dialogLines:
   - speakerName: Pak Darma
     subtitle: Peternak Senior
@@ -25885,9 +25935,12 @@ MonoBehaviour:
       kamu.
     isPlayerLine: 0
     expression: {fileID: 0}
+  dialogStage: 0
+  canTalkAgain: 0
   interactRadius: 3
   npcSilhouette: {fileID: 0}
   playerSilhouette: {fileID: 21300000, guid: 94e831ae7a8271345adbddd2e1688a1e, type: 3}
+  shopUI: {fileID: 0}
 --- !u!1 &1939038807
 GameObject:
   m_ObjectHideFlags: 0
@@ -27067,8 +27120,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: "\u25BC"
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 0}
-  m_sharedMaterial: {fileID: 0}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -28082,8 +28135,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: '!'
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 1409845823}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 1409845823}
   m_fontMaterials: []
@@ -28180,7 +28233,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1409845823}
+  - {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -39064,3 +39117,4 @@ SceneRoots:
   - {fileID: 849319736}
   - {fileID: 491617888}
   - {fileID: 28375869}
+

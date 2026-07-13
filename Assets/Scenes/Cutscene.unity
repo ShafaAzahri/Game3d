@@ -357,8 +357,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Tekan [Space] / klik untuk lewati
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
-  m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
+  m_sharedMaterial: {fileID: 7300515970439537968, guid: 1cbe132a8871e524098758a57b69ee8d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []

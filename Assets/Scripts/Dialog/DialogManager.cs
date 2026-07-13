@@ -14,6 +14,8 @@ public class DialogManager : MonoBehaviour
 {
     public static DialogManager Instance { get; private set; }
 
+    public int LastEndFrame { get; private set; } = -1;
+
     [Header("UI References")]
     public GameObject dialogPanel;
     public TMP_Text speakerNameText;
@@ -302,6 +304,11 @@ public class DialogManager : MonoBehaviour
         }
     }
 
+    public void ForceEndDialog()
+    {
+        EndDialog();
+    }
+
     /// <summary>
     /// Dipanggil saat G ditekan atau tombol Next diklik.
     /// </summary>
@@ -342,6 +349,7 @@ public class DialogManager : MonoBehaviour
     {
         dialogActive = false;
         cutsceneMode = false;
+        LastEndFrame = Time.frameCount;
 
         if (typewriterCoroutine != null)    StopCoroutine(typewriterCoroutine);
         if (blinkCoroutine != null)         StopCoroutine(blinkCoroutine);

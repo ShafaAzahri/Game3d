@@ -66,6 +66,7 @@ public class GardenPlot : MonoBehaviour
     private int         grassLayerIndex = -1;
     private bool        terrainCached   = false;
     private bool        waitingForSeed  = false; // sedang di UI pilih bibit
+    private bool        isHoeing        = false; // sedang mencangkul
 
     // ─────────────────────────────────────────────
     // UNITY LIFECYCLE
@@ -120,6 +121,11 @@ public class GardenPlot : MonoBehaviour
         if (!playerInRange) return;
         if (DialogManager.Instance != null && DialogManager.Instance.IsDialogActive) return;
         if (waitingForSeed) return;
+        if (isHoeing)
+        {
+            if (FarmingPromptUI.Instance != null) FarmingPromptUI.Instance.Hide();
+            return;
+        }
 
         UpdatePrompt();
 
@@ -189,9 +195,21 @@ public class GardenPlot : MonoBehaviour
 
     private void Hoe()
     {
+        StartCoroutine(HoeRoutine());
+    }
+
+    private IEnumerator HoeRoutine()
+    {
+        isHoeing = true;
+
+        // Tunda 1.2 detik (menunggu cangkul menyentuh tanah pada animasi)
+        yield return new WaitForSeconds(1.2f);
+
         SetState(PlotState.Hoed);
         PaintTerrainLayer(soilLayerIndex);
         Debug.Log($"[GardenPlot] {name}: Tanah dicangkul!");
+
+        isHoeing = false;
     }
 
     private void TryPlant()
