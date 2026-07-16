@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Jamu Kencur
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemName: Jamu Kencur
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 4bbf635de1b2ef94dbe68b7132c52c5d, type: 3}
   description: Jamu kencur tradisional, penghilang pegal.
   itemType: 2

@@ -5,7 +5,7 @@ using System.Collections.Generic;
 /// <summary>
 /// Quest Manager v2 — Support linear quest, counter quest (paralel), dan branching.
 ///
-/// PROLOG  : move → cangkul kebun → talk Nenek (dapat bibit) → openBag → openRecipe
+/// PROLOG  : move → talk Nenek → cangkul kebun → talk Nenek (dapat bibit) → openBag → openRecipe
 ///           → cook Jamu Jahe → giveItem Nenek → PROLOG SELESAI
 /// CH 1   : talk Laras → talk Darma → openRecipe → talk Nisa → cook Pegal Linu
 ///           → giveItem Darma → CH1 SELESAI
@@ -54,6 +54,12 @@ public class QuestManager : MonoBehaviour
         public string rewardTitle;
         [Tooltip("Gold yang diberikan saat objektif ini selesai. 0 = tidak ada.")]
         public int rewardGold;
+
+        [Header("Reward Item (opsional)")]
+        public string rewardItemName1;
+        public int rewardItemAmount1;
+        public string rewardItemName2;
+        public int rewardItemAmount2;
     }
 
     [Header("Daftar Objektif (urut)")]
@@ -108,6 +114,7 @@ public class QuestManager : MonoBehaviour
     private void OnEnable()
     {
         GardenPlot.OnAnyPlanted   += HandlePlanted;
+        GardenPlot.OnAnyHoed      += HandleHoed;
         GardenPlot.OnAnyHarvested += HandleHarvested;
         CookingTrigger.OnAnyOpened += HandleRecipeBookOpened;
         CookingUI.OnAnyCooked     += HandleCooked;
@@ -116,6 +123,7 @@ public class QuestManager : MonoBehaviour
     private void OnDisable()
     {
         GardenPlot.OnAnyPlanted   -= HandlePlanted;
+        GardenPlot.OnAnyHoed      -= HandleHoed;
         GardenPlot.OnAnyHarvested -= HandleHarvested;
         CookingTrigger.OnAnyOpened -= HandleRecipeBookOpened;
         CookingUI.OnAnyCooked     -= HandleCooked;
@@ -176,8 +184,14 @@ public class QuestManager : MonoBehaviour
     {
         if (step >= objectives.Length) return;
         var obj = objectives[step];
+        if (obj.type == ObjType.Plant && Matches(plantName)) Advance();
+    }
+
+    private void HandleHoed()
+    {
+        if (step >= objectives.Length) return;
+        var obj = objectives[step];
         if (obj.type == ObjType.Hoe) Advance();
-        else if (obj.type == ObjType.Plant && Matches(plantName)) Advance();
     }
 
     private void HandleHarvested(string itemName)
@@ -395,6 +409,19 @@ public class QuestManager : MonoBehaviour
             Debug.Log($"[QuestManager] +{completed.rewardGold}G → total {GameManager.Instance.Data.money}G");
         }
 
+        // Item rewards
+        if (!string.IsNullOrEmpty(completed.rewardItemName1) && completed.rewardItemAmount1 > 0)
+        {
+            GiveItemFromStarter(completed.rewardItemName1, completed.rewardItemAmount1);
+            gaveSomething = true;
+        }
+
+        if (!string.IsNullOrEmpty(completed.rewardItemName2) && completed.rewardItemAmount2 > 0)
+        {
+            GiveItemFromStarter(completed.rewardItemName2, completed.rewardItemAmount2);
+            gaveSomething = true;
+        }
+
         if (!string.IsNullOrEmpty(completed.rewardMessage) && RewardPopup.Instance != null)
         {
             string title = string.IsNullOrEmpty(completed.rewardTitle) ? "REWARD" : completed.rewardTitle;
@@ -406,6 +433,31 @@ public class QuestManager : MonoBehaviour
 
         // Update gold UI
         if (GoldUI.Instance != null) GoldUI.Instance.Refresh();
+    }
+
+    private void GiveItemFromStarter(string itemName, int amount)
+    {
+        var starter = Object.FindFirstObjectByType<StarterInventory>();
+        if (starter != null && starter.starterItems != null)
+        {
+            foreach (var si in starter.starterItems)
+            {
+                if (si.item != null && si.item.itemName == itemName)
+                {
+                    if (InventoryManager.Instance != null)
+                    {
+                        InventoryManager.Instance.AddItem(si.item, amount);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Fallback jika tidak ditemukan di starterItems, langsung add by name
+        if (InventoryManager.Instance != null)
+        {
+            InventoryManager.Instance.AddItem(itemName, amount);
+        }
     }
 
     private void ShowChapterTransition(int fromStep, int toStep)
@@ -544,10 +596,20 @@ public class QuestManager : MonoBehaviour
         // ─────────────────────────────────────────────────────────────
         // PROLOG: Belajar Meracik Jamu
         // ─────────────────────────────────────────────────────────────
-        list.Add(new Objective { type = ObjType.Talk, param = "Nenek", text = "Bicara dengan Nenek Rukmini." });
         list.Add(new Objective { type = ObjType.Move, text = "Gerakkan karaktermu dengan WASD." });
-        list.Add(new Objective { type = ObjType.Hoe, text = "Cangkul plot tanah di kebun." });
         list.Add(new Objective { type = ObjType.Talk, param = "Nenek", text = "Bicara dengan Nenek Rukmini." });
+        list.Add(new Objective { type = ObjType.Hoe, text = "Cangkul plot tanah di kebun." });
+        list.Add(new Objective { 
+            type = ObjType.Talk, 
+            param = "Nenek", 
+            text = "Bicara dengan Nenek Rukmini.",
+            rewardItemName1 = "Bibit Jahe",
+            rewardItemAmount1 = 5,
+            rewardItemName2 = "Bibit Kunyit",
+            rewardItemAmount2 = 5,
+            rewardTitle = "Mendapat Bibit",
+            rewardMessage = "Kamu mendapat bibit jahe dan kunyit (masing-masing 5 buah) dari Nenek."
+        });
         list.Add(new Objective { type = ObjType.OpenBag, text = "Buka tas penyimpananmu dengan menekan tombol [B]." });
         list.Add(new Objective { type = ObjType.OpenRecipe, text = "Buka buku resep jamumu dengan menekan tombol [Tab]." });
         list.Add(new Objective { type = ObjType.Cook, param = "Jamu Jahe", text = "Masak Jamu Jahe di tungku masak kebun." });
@@ -666,6 +728,16 @@ public class QuestManager : MonoBehaviour
         {
             return FindNpcTransform(param);
         }
+
+        if (type == ObjType.Cook)
+        {
+            return FindCookingStoveTransform(param);
+        }
+
+        if (type == ObjType.Hoe || type == ObjType.Plant || type == ObjType.Harvest)
+        {
+            return FindGardenPlotTransform();
+        }
         
         if (param == "Hutan") return FindNpcTransform("Ratri");
         if (param == "Pantai") return FindNpcTransform("Istri Nelayan") ?? FindNpcTransform("Bahri");
@@ -674,6 +746,71 @@ public class QuestManager : MonoBehaviour
         if (param == "Toko Nisa") return FindNpcTransform("Nisa");
         
         return null;
+    }
+
+    private Transform FindCookingStoveTransform(string param = "")
+    {
+        var stoves = Object.FindObjectsByType<CookingTrigger>(FindObjectsSortMode.None);
+        if (stoves == null || stoves.Length == 0) return null;
+
+        if (stoves.Length == 1) return stoves[0].transform;
+
+        if (!string.IsNullOrEmpty(param))
+        {
+            string lowerParam = param.ToLower();
+            foreach (var stove in stoves)
+            {
+                if (stove.name.ToLower().Contains(lowerParam) || stove.name.ToLower().Contains("pantai") || stove.name.ToLower().Contains("beach"))
+                {
+                    if (lowerParam.Contains("pantai") && (stove.name.ToLower().Contains("pantai") || stove.name.ToLower().Contains("beach")))
+                        return stove.transform;
+                }
+            }
+        }
+
+        var player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            float minDistance = float.MaxValue;
+            Transform closest = null;
+            foreach (var stove in stoves)
+            {
+                float dist = Vector3.Distance(player.transform.position, stove.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closest = stove.transform;
+                }
+            }
+            if (closest != null) return closest;
+        }
+
+        return stoves[0].transform;
+    }
+
+    private Transform FindGardenPlotTransform()
+    {
+        var plots = Object.FindObjectsByType<GardenPlot>(FindObjectsSortMode.None);
+        if (plots == null || plots.Length == 0) return null;
+
+        var player = GameObject.FindWithTag("Player");
+        if (player != null)
+        {
+            float minDistance = float.MaxValue;
+            Transform closest = null;
+            foreach (var plot in plots)
+            {
+                float dist = Vector3.Distance(player.transform.position, plot.transform.position);
+                if (dist < minDistance)
+                {
+                    minDistance = dist;
+                    closest = plot.transform;
+                }
+            }
+            if (closest != null) return closest;
+        }
+
+        return plots[0].transform;
     }
 
     private Transform FindNpcTransform(string npcId)

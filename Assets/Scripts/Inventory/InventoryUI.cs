@@ -37,10 +37,11 @@ public class InventoryUI : MonoBehaviour
 
     void Start()
     {
-        InitSlots();
-        // Catatan: SetActive(false) dihandle oleh InventoryToggle.Start()
-        // Jangan panggil SetActive(false) di sini karena akan langsung menutup
-        // panel saat pertama kali diaktifkan oleh Open()
+        if (slots.Count == 0)
+        {
+            InitSlots();
+            Refresh();
+        }
     }
 
     void OnEnable()

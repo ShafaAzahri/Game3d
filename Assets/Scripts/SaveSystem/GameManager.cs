@@ -55,6 +55,36 @@ public class GameManager : MonoBehaviour
         Data ??= SaveData.CreateDefault();
     }
 
+    private void Start()
+    {
+#if UNITY_EDITOR
+        // Jika masuk langsung ke scene gameplay di editor, otomatis set slot ke 0 agar save system aktif
+        string activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+        if (activeScene != "MainMenu" && activeScene != "Cutscene" && CurrentSlot == -1)
+        {
+            CurrentSlot = 0;
+            if (SaveManager.HasSave(0))
+            {
+                LoadGame(0);
+                // Karena kita langsung start di scene ini, terapkan state setelah 1 frame agar sistem lain selesai Awake/Start
+                StartCoroutine(ApplyStateNextFrame());
+            }
+            else
+            {
+                NewGame(0);
+            }
+        }
+#endif
+    }
+
+#if UNITY_EDITOR
+    private System.Collections.IEnumerator ApplyStateNextFrame()
+    {
+        yield return null;
+        ApplyLoadedState();
+    }
+#endif
+
     // ─────────────────────────────────────────────────────────────
     // NEW / LOAD / SAVE
     // ─────────────────────────────────────────────────────────────

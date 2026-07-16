@@ -54,6 +54,15 @@ public class CookingUI : MonoBehaviour
     private float maxScroll = 0f;
     private List<RectTransform> buttonRects = new List<RectTransform>();
 
+    [Header("Cooking Minigame State")]
+    private GameObject minigameOverlay;
+    private RectTransform needleRect;
+    private bool isMinigameActive = false;
+    private CookingRecipe activeMinigameRecipe;
+    private float needleProgress = 0f;
+    private float needleDirection = 1f;
+    private float minigameSpeed = 1.5f;
+
     [Header("Scroll Settings")]
     public float scrollSpeed = 12f;
     public float scrollSensitivity = 0.12f;
@@ -107,12 +116,63 @@ public class CookingUI : MonoBehaviour
 
         scrollOffset = 0f;
         scrollTarget = 0f;
+
+        isMinigameActive = false;
+        if (minigameOverlay != null)
+        {
+            Destroy(minigameOverlay);
+            minigameOverlay = null;
+        }
+
         SetupRecipeButtons();
         SelectRecipe(0);
     }
 
+    void OnDisable()
+    {
+        isMinigameActive = false;
+        if (minigameOverlay != null)
+        {
+            Destroy(minigameOverlay);
+            minigameOverlay = null;
+        }
+    }
+
     void Update()
     {
+        if (isMinigameActive)
+        {
+            // Gerakkan jarum bolak-balik
+            needleProgress += Time.unscaledDeltaTime * minigameSpeed * needleDirection;
+            if (needleProgress >= 1f)
+            {
+                needleProgress = 1f;
+                needleDirection = -1f;
+            }
+            else if (needleProgress <= 0f)
+            {
+                needleProgress = 0f;
+                needleDirection = 1f;
+            }
+
+            // Update posisi jarum secara visual
+            if (needleRect != null)
+            {
+                float xMin = needleProgress * 0.98f;
+                needleRect.anchorMin = new Vector2(xMin, -0.2f);
+                needleRect.anchorMax = new Vector2(xMin + 0.02f, 1.2f);
+                needleRect.offsetMin = Vector2.zero;
+                needleRect.offsetMax = Vector2.zero;
+            }
+
+            // Dengar input untuk menghentikan jarum memasak
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.G) || Input.GetMouseButtonDown(0))
+            {
+                EvaluateCookingResult(needleProgress);
+            }
+            return; // Lewati input normal menu memasak jika minigame aktif
+        }
+
         if (Input.GetKeyDown(KeyCode.G))
         {
             OnCookPressed();
@@ -513,31 +573,306 @@ public class CookingUI : MonoBehaviour
             }
         }
 
-        // 2. Kurangi semua bahan dari inventory
+        // Mulai minigame memasak!
+        StartCookingMinigame(recipe);
+    }
+
+    private void StartCookingMinigame(CookingRecipe recipe)
+    {
+        isMinigameActive = true;
+        activeMinigameRecipe = recipe;
+        needleProgress = 0f;
+        needleDirection = 1f;
+
+        // Atur kecepatan jarum berdasarkan seberapa kuat efek penyembuhan masakan (makin tinggi HP, makin menantang)
+        minigameSpeed = 1.3f + (recipe.hpRestore / 80f);
+
+        // Hancurkan overlay minigame lama jika ada
+        if (minigameOverlay != null)
+        {
+            Destroy(minigameOverlay);
+        }
+
+        // 1. Buat Container Fullscreen Overlay
+        minigameOverlay = new GameObject("CookingMinigameOverlay");
+        minigameOverlay.transform.SetParent(this.transform, false);
+        RectTransform overlayRect = minigameOverlay.AddComponent<RectTransform>();
+        overlayRect.anchorMin = Vector2.zero;
+        overlayRect.anchorMax = Vector2.one;
+        overlayRect.offsetMin = Vector2.zero;
+        overlayRect.offsetMax = Vector2.zero;
+
+        Image bgImage = minigameOverlay.AddComponent<Image>();
+        bgImage.color = new Color(0.08f, 0.08f, 0.1f, 0.88f); // Latar belakang gelap transparan premium
+
+        // 2. Buat Panel Tengah
+        GameObject panel = new GameObject("MinigamePanel");
+        panel.transform.SetParent(minigameOverlay.transform, false);
+        RectTransform panelRect = panel.AddComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.25f, 0.35f);
+        panelRect.anchorMax = new Vector2(0.75f, 0.65f);
+        panelRect.offsetMin = Vector2.zero;
+        panelRect.offsetMax = Vector2.zero;
+
+        Image panelBg = panel.AddComponent<Image>();
+        panelBg.color = new Color(0.16f, 0.16f, 0.20f, 1f);
+
+        Outline panelOutline = panel.AddComponent<Outline>();
+        panelOutline.effectColor = new Color(0.75f, 0.65f, 0.35f, 0.5f);
+        panelOutline.effectDistance = new Vector2(2f, -2f);
+
+        // 3. Teks Judul
+        GameObject titleObj = new GameObject("TitleText");
+        titleObj.transform.SetParent(panel.transform, false);
+        RectTransform titleRect = titleObj.AddComponent<RectTransform>();
+        titleRect.anchorMin = new Vector2(0.05f, 0.72f);
+        titleRect.anchorMax = new Vector2(0.95f, 0.92f);
+        titleRect.offsetMin = Vector2.zero;
+        titleRect.offsetMax = Vector2.zero;
+
+        Text titleText = titleObj.AddComponent<Text>();
+        titleText.text = "MEMASAK: " + recipe.recipeName.ToUpper();
+        titleText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        titleText.fontSize = 18;
+        titleText.fontStyle = FontStyle.Bold;
+        titleText.alignment = TextAnchor.MiddleCenter;
+        titleText.color = new Color(0.95f, 0.82f, 0.38f, 1f); // Warna emas khas
+
+        Outline titleOutline = titleObj.AddComponent<Outline>();
+        titleOutline.effectColor = Color.black;
+        titleOutline.effectDistance = new Vector2(1f, -1f);
+
+        // 4. Bar Pengukur Horizontal (Background)
+        GameObject barBgObj = new GameObject("BarBackground");
+        barBgObj.transform.SetParent(panel.transform, false);
+        RectTransform barBgRect = barBgObj.AddComponent<RectTransform>();
+        barBgRect.anchorMin = new Vector2(0.1f, 0.44f);
+        barBgRect.anchorMax = new Vector2(0.9f, 0.56f);
+        barBgRect.offsetMin = Vector2.zero;
+        barBgRect.offsetMax = Vector2.zero;
+
+        Image barBgImage = barBgObj.AddComponent<Image>();
+        barBgImage.color = new Color(0.08f, 0.08f, 0.1f, 1f);
+
+        Outline barBgOutline = barBgObj.AddComponent<Outline>();
+        barBgOutline.effectColor = new Color(0.35f, 0.35f, 0.38f, 0.8f);
+        barBgOutline.effectDistance = new Vector2(1f, -1f);
+
+        // 5. Good Zone (Zona Hijau: 45% - 90%)
+        GameObject goodZoneObj = new GameObject("GoodZone");
+        goodZoneObj.transform.SetParent(barBgObj.transform, false);
+        RectTransform goodZoneRect = goodZoneObj.AddComponent<RectTransform>();
+        goodZoneRect.anchorMin = new Vector2(0.45f, 0f);
+        goodZoneRect.anchorMax = new Vector2(0.90f, 1f);
+        goodZoneRect.offsetMin = Vector2.zero;
+        goodZoneRect.offsetMax = Vector2.zero;
+
+        Image goodZoneImage = goodZoneObj.AddComponent<Image>();
+        goodZoneImage.color = new Color(0.2f, 0.7f, 0.35f, 0.6f);
+
+        // 6. Perfect Zone (Zona Emas: 70% - 85%)
+        GameObject perfectZoneObj = new GameObject("PerfectZone");
+        perfectZoneObj.transform.SetParent(barBgObj.transform, false);
+        RectTransform perfectZoneRect = perfectZoneObj.AddComponent<RectTransform>();
+        perfectZoneRect.anchorMin = new Vector2(0.70f, 0f);
+        perfectZoneRect.anchorMax = new Vector2(0.85f, 1f);
+        perfectZoneRect.offsetMin = Vector2.zero;
+        perfectZoneRect.offsetMax = Vector2.zero;
+
+        Image perfectZoneImage = perfectZoneObj.AddComponent<Image>();
+        perfectZoneImage.color = new Color(0.98f, 0.72f, 0.2f, 0.9f);
+
+        // 7. Jarum Petunjuk (Needle)
+        GameObject needleObj = new GameObject("Needle");
+        needleObj.transform.SetParent(barBgObj.transform, false);
+        needleRect = needleObj.AddComponent<RectTransform>();
+        needleRect.anchorMin = new Vector2(0f, -0.2f);
+        needleRect.anchorMax = new Vector2(0.02f, 1.2f);
+        needleRect.offsetMin = Vector2.zero;
+        needleRect.offsetMax = Vector2.zero;
+
+        Image needleImage = needleObj.AddComponent<Image>();
+        needleImage.color = Color.white;
+
+        Outline needleOutline = needleObj.AddComponent<Outline>();
+        needleOutline.effectColor = Color.black;
+        needleOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+        // 8. Teks Petunjuk
+        GameObject hintObj = new GameObject("HintText");
+        hintObj.transform.SetParent(panel.transform, false);
+        RectTransform hintRect = hintObj.AddComponent<RectTransform>();
+        hintRect.anchorMin = new Vector2(0.05f, 0.15f);
+        hintRect.anchorMax = new Vector2(0.95f, 0.35f);
+        hintRect.offsetMin = Vector2.zero;
+        hintRect.offsetMax = Vector2.zero;
+
+        Text hintText = hintObj.AddComponent<Text>();
+        hintText.text = "Tekan [SPACE], [G], atau [KLIK] pada ZONA EMAS!";
+        hintText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        hintText.fontSize = 12;
+        hintText.alignment = TextAnchor.MiddleCenter;
+        hintText.color = new Color(0.85f, 0.85f, 0.9f, 1f);
+
+        Outline hintOutline = hintObj.AddComponent<Outline>();
+        hintOutline.effectColor = Color.black;
+        hintOutline.effectDistance = new Vector2(1f, -1f);
+
+        // 9. Teks Hasil (Disembunyikan di awal)
+        GameObject resultObj = new GameObject("ResultText");
+        resultObj.transform.SetParent(panel.transform, false);
+        RectTransform resultRect = resultObj.AddComponent<RectTransform>();
+        resultRect.anchorMin = new Vector2(0.05f, 0.38f);
+        resultRect.anchorMax = new Vector2(0.95f, 0.68f);
+        resultRect.offsetMin = Vector2.zero;
+        resultRect.offsetMax = Vector2.zero;
+
+        Text resultText = resultObj.AddComponent<Text>();
+        resultText.text = "";
+        resultText.font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        resultText.fontSize = 32;
+        resultText.fontStyle = FontStyle.Bold;
+        resultText.alignment = TextAnchor.MiddleCenter;
+        resultText.raycastTarget = false;
+        resultObj.SetActive(false);
+    }
+
+    private void EvaluateCookingResult(float finalValue)
+    {
+        isMinigameActive = false; // Matikan input minigame
+
+        CookingRecipe recipe = activeMinigameRecipe;
+        if (recipe == null) return;
+
+        // Evaluasi zona needle
+        bool isPerfect = finalValue >= 0.70f && finalValue <= 0.85f;
+        bool isGood = finalValue >= 0.45f && finalValue <= 0.90f;
+
+        string resultTitle = "";
+        Color resultColor = Color.white;
+        int rewardAmount = 0;
+        bool isFail = false;
+
+        if (isPerfect)
+        {
+            resultTitle = "SEMPURNA!";
+            resultColor = new Color(0.95f, 0.82f, 0.38f); // Emas keemasan
+            rewardAmount = 2; // Bonus 2x masakan untuk Perfect!
+        }
+        else if (isGood)
+        {
+            resultTitle = "BERHASIL!";
+            resultColor = new Color(0.4f, 1f, 0.4f); // Hijau cerah
+            rewardAmount = 1;
+        }
+        else
+        {
+            resultTitle = "GOSONG!";
+            resultColor = new Color(1f, 0.35f, 0.3f); // Merah membara
+            rewardAmount = 1;
+            isFail = true;
+        }
+
+        // 1. Kurangi bahan-bahan masakan dari inventory
         foreach (var ing in recipe.ingredients)
         {
             InventoryManager.Instance.RemoveItem(ing.itemName, ing.amountRequired);
         }
 
-        // 3. Tambah hasil masakan ke inventory
-        if (recipe.resultItem != null)
+        // 2. Tambahkan hasil masakan ke inventory
+        if (isFail)
         {
-            InventoryManager.Instance.AddItem(recipe.resultItem, 1);
-            Debug.Log($"[Cooking] Berhasil memasak {recipe.resultItem.itemName}!");
+            // Berikan makanan gosong dengan sprite
+            Sprite burntSprite = null;
+#if UNITY_EDITOR
+            burntSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/Herbal/masakan_gosong.png");
+#endif
+            InventoryManager.Instance.AddItem("Masakan Gosong", 1, burntSprite);
+            ShowStatus("Masakan gosong! Mendapat 1 Masakan Gosong di tas.", false);
         }
         else
         {
-            // Fallback: gunakan recipeName + recipeImage
-            InventoryManager.Instance.AddItem(recipe.recipeName, 1, recipe.recipeImage);
-            Debug.Log($"[Cooking] Berhasil memasak {recipe.recipeName}!");
+            if (recipe.resultItem != null)
+            {
+                InventoryManager.Instance.AddItem(recipe.resultItem, rewardAmount);
+                ShowStatus($"Berhasil memasak {recipe.resultItem.itemName} ({resultTitle})! Jumlah: {rewardAmount}x.", true);
+            }
+            else
+            {
+                InventoryManager.Instance.AddItem(recipe.recipeName, rewardAmount, recipe.recipeImage);
+                ShowStatus($"Berhasil memasak {recipe.recipeName} ({resultTitle})! Jumlah: {rewardAmount}x.", true);
+            }
+            OnAnyCooked?.Invoke(recipe.recipeName);
         }
 
-        // 4. Tampilkan pesan sukses
-        ShowStatus("Berhasil memasak " + recipe.recipeName + "! Masuk ke tas.", true);
-        OnAnyCooked?.Invoke(recipe.recipeName);
+        // 3. Visual feedback di dalam overlay
+        if (minigameOverlay != null)
+        {
+            Transform panelTrans = minigameOverlay.transform.Find("MinigamePanel");
+            if (panelTrans != null)
+            {
+                Transform barTrans = panelTrans.Find("BarBackground");
+                if (barTrans != null) barTrans.gameObject.SetActive(false);
 
-        // 5. Update tampilan ingredient (stok berubah)
-        UpdateIngredients(recipe);
+                Transform hintTrans = panelTrans.Find("HintText");
+                if (hintTrans != null) hintTrans.gameObject.SetActive(false);
+
+                Transform resultTrans = panelTrans.Find("ResultText");
+                if (resultTrans != null)
+                {
+                    resultTrans.gameObject.SetActive(true);
+                    Text rText = resultTrans.GetComponent<Text>();
+                    rText.text = resultTitle;
+                    rText.color = resultColor;
+
+                    // Outline hasil biar makin menonjol
+                    Outline outline = resultTrans.gameObject.GetComponent<Outline>();
+                    if (outline == null) outline = resultTrans.gameObject.AddComponent<Outline>();
+                    outline.effectColor = Color.black;
+                    outline.effectDistance = new Vector2(2f, -2f);
+
+                    resultTrans.localScale = Vector3.zero;
+                    StartCoroutine(AnimateResultPop(resultTrans));
+                }
+            }
+        }
+
+        // 4. Hancurkan minigame overlay setelah 1.5 detik
+        StartCoroutine(DestroyMinigameAfterDelay(1.5f));
+    }
+
+    private IEnumerator AnimateResultPop(Transform trans)
+    {
+        float duration = 0.25f;
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            elapsed += Time.unscaledDeltaTime;
+            float t = elapsed / duration;
+            // Back-ease-out scale pop effect
+            float s = Mathf.Sin(t * Mathf.PI * 0.5f) * 1.2f;
+            if (t >= 0.8f) s = 1.0f;
+            trans.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+        trans.localScale = Vector3.one;
+    }
+
+    private IEnumerator DestroyMinigameAfterDelay(float delay)
+    {
+        yield return new WaitForSecondsRealtime(delay);
+
+        if (minigameOverlay != null)
+        {
+            Destroy(minigameOverlay);
+            minigameOverlay = null;
+        }
+
+        // Perbarui list bahan setelah stok berubah
+        if (recipes != null && selectedIndex >= 0 && selectedIndex < recipes.Length)
+        {
+            UpdateIngredients(IsRecipeLocked(recipes[selectedIndex]) ? null : recipes[selectedIndex]);
+        }
     }
 
     private void ShowStatus(string message, bool success)

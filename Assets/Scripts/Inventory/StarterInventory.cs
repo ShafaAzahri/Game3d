@@ -30,7 +30,7 @@ public class StarterInventory : MonoBehaviour
 
     void Start()
     {
-        GiveStarterItems();
+        GiveStarterItems(false);
     }
 
     void Update()
@@ -38,15 +38,21 @@ public class StarterInventory : MonoBehaviour
         if (Input.GetKeyDown(debugRefillKey))
         {
             Debug.Log("[StarterInventory] Debug refill bibit!");
-            GiveStarterItems();
+            GiveStarterItems(true);
         }
     }
 
-    public void GiveStarterItems()
+    public void GiveStarterItems(bool isDebug)
     {
         if (InventoryManager.Instance == null)
         {
             Debug.LogWarning("[StarterInventory] InventoryManager tidak ditemukan!");
+            return;
+        }
+
+        if (!isDebug)
+        {
+            Debug.Log("[StarterInventory] Permainan dimulai dengan inventory kosong.");
             return;
         }
 
@@ -58,6 +64,6 @@ public class StarterInventory : MonoBehaviour
             InventoryManager.Instance.AddItem(si.item, si.amount);
         }
 
-        Debug.Log($"[StarterInventory] {starterItems.Length} jenis item diberikan ke player.");
+        Debug.Log($"[StarterInventory] {starterItems.Length} jenis item diberikan ke player via debug refill.");
     }
 }

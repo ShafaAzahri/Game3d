@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Jamu Jahe
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemName: Jamu Jahe
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: e31c99b9e30f8694da1c9b4d3206a511, type: 3}
   description: Jamu jahe hangat, memulihkan tenaga.
   itemType: 2

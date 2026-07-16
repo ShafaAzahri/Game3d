@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using System.IO;
 
 /// <summary>
 /// Genshin Impact-style Dialog Manager.
@@ -35,6 +36,8 @@ public class DialogManager : MonoBehaviour
     public Color activePortraitColor = Color.white;
     [Tooltip("Warna untuk karakter yang TIDAK bicara (redup, biar siluet makin gelap).")]
     public Color inactivePortraitColor = new Color(0.35f, 0.35f, 0.40f, 1f);
+    [Tooltip("Warna siluet hitam/gelap untuk karakter yang sedang diam.")]
+    public Color silhouetteColor = new Color(0.08f, 0.08f, 0.1f, 1f);
 
     [Header("Typewriter Settings")]
     public float typewriterSpeed = 0.03f;
@@ -50,6 +53,7 @@ public class DialogManager : MonoBehaviour
     // Siluet kedua karakter untuk dialog yang sedang berjalan
     private Sprite playerSilhouette;   // siluet sisi kiri (MC)
     private Sprite npcSilhouette;      // siluet sisi kanan (NPC)
+    private string currentConversationNpcName = ""; // nama NPC untuk percakapan aktif
     private bool isTyping = false;
     private bool dialogActive = false;
     private Coroutine typewriterCoroutine;
@@ -131,6 +135,17 @@ public class DialogManager : MonoBehaviour
         currentLines   = lines;
         currentLineIndex = 0;
 
+        // Scan nama NPC dalam percakapan ini
+        currentConversationNpcName = "";
+        foreach (var l in lines)
+        {
+            if (l != null && !l.isPlayerLine && !string.IsNullOrEmpty(l.speakerName) && !l.speakerName.ToLower().Contains("robby") && !l.speakerName.ToLower().Contains("mc"))
+            {
+                currentConversationNpcName = l.speakerName;
+                break;
+            }
+        }
+
         ShowInteractPrompt(false);
         SetPlayerMovement(false);
         if (dialogPanel != null) dialogPanel.SetActive(true);
@@ -155,6 +170,17 @@ public class DialogManager : MonoBehaviour
         dialogActive     = true;
         currentLines     = lines;
         currentLineIndex = 0;
+
+        // Scan nama NPC dalam percakapan ini
+        currentConversationNpcName = "";
+        foreach (var l in lines)
+        {
+            if (l != null && !l.isPlayerLine && !string.IsNullOrEmpty(l.speakerName) && !l.speakerName.ToLower().Contains("robby") && !l.speakerName.ToLower().Contains("mc"))
+            {
+                currentConversationNpcName = l.speakerName;
+                break;
+            }
+        }
 
         ShowInteractPrompt(false);
         if (dialogPanel != null) dialogPanel.SetActive(true);
@@ -216,18 +242,185 @@ public class DialogManager : MonoBehaviour
     /// </summary>
     private void UpdatePortraits(DialogLine line)
     {
-        if (line.isPlayerLine)
+        // 1. Tentukan sprite untuk sisi kiri (Robby / Player)
+        Sprite leftSprite = null;
+        bool leftActive = line.isPlayerLine;
+
+        string leftEmotion = leftActive ? AnalyzeEmotion("Robby", line.text) : "normal";
+        leftSprite = GetDynamicSprite("Robby", leftEmotion);
+
+        // Jika leftSprite gagal dimuat di editor, gunakan fallback playerSilhouette original
+        if (leftSprite == null) leftSprite = playerSilhouette;
+
+        // 2. Tentukan sprite untuk sisi kanan (NPC)
+        Sprite rightSprite = null;
+        bool rightActive = !line.isPlayerLine;
+
+        // Deteksi nama NPC aktif
+        string activeNpcName = "";
+        if (rightActive)
         {
-            // Player (MC) bicara di sisi KIRI
-            SetPortrait(leftPortrait,  line.expression != null ? line.expression : playerSilhouette, true);
-            SetPortrait(rightPortrait, npcSilhouette, false);
+            activeNpcName = line.speakerName;
+            // Catat nama NPC aktif untuk dijadikan siluet ketika Robby membalas pembicaraan
+            if (!string.IsNullOrEmpty(activeNpcName) && !activeNpcName.ToLower().Contains("robby") && !activeNpcName.ToLower().Contains("mc"))
+            {
+                currentConversationNpcName = activeNpcName;
+            }
         }
         else
         {
-            // NPC bicara di sisi KANAN
-            SetPortrait(rightPortrait, line.expression != null ? line.expression : npcSilhouette, true);
-            SetPortrait(leftPortrait,  playerSilhouette, false);
+            // Jika Robby yang bicara, gunakan nama NPC yang sudah dicatat tadi
+            activeNpcName = currentConversationNpcName;
         }
+
+        string npcFolder = GetCharacterFolderName(activeNpcName);
+
+        if (!string.IsNullOrEmpty(npcFolder))
+        {
+            string rightEmotion = rightActive ? AnalyzeEmotion(npcFolder, line.text) : "normal";
+            rightSprite = GetDynamicSprite(npcFolder, rightEmotion);
+        }
+        else
+        {
+            // Jika NPC lain yang belum terdaftar foldernya, gunakan sprite bawaan dari dialog line / siluet default
+            if (rightActive)
+            {
+                rightSprite = line.expression != null ? line.expression : npcSilhouette;
+            }
+            else
+            {
+                rightSprite = npcSilhouette;
+            }
+        }
+
+        // Jika rightSprite gagal dimuat, gunakan fallback npcSilhouette original
+        if (rightSprite == null) rightSprite = npcSilhouette;
+
+        // Terapkan ke Image UI
+        SetPortrait(leftPortrait, leftSprite, leftActive);
+        SetPortrait(rightPortrait, rightSprite, rightActive);
+    }
+
+    private string AnalyzeEmotion(string speaker, string text)
+    {
+        text = text.ToLower();
+        
+        // Deteksi ekspresi berdasarkan kata kunci umum yang ada di text
+        if (text.Contains("aduh") || text.Contains("shock") || text.Contains("kaget") || 
+            text.Contains("melilit") || text.Contains("sakit") || text.Contains("kenapa") || 
+            text.Contains("gimana") || text.Contains("kurang sehat") || text.Contains("lelah") || 
+            text.Contains("pusing") || text.Contains("mual") || text.Contains("demam"))
+        {
+            if (speaker.ToLower().Contains("laras") || text.Contains("malu") || text.Contains("blush") || text.Contains("cantik") || text.Contains("manis"))
+                return "blushing";
+                
+            return "sad"; 
+        }
+
+        if (text.Contains("senang") || text.Contains("terima kasih") || text.Contains("hebat") || 
+            text.Contains("siap") || text.Contains("enak") || text.Contains("bangga") || 
+            text.Contains("bagus") || text.Contains("hehe") || text.Contains("lucu") || 
+            text.Contains("tercinta") || text.Contains("selamat") || text.Contains("jodoh") || 
+            text.Contains("cocok") || text.Contains("cicipi") || text.Contains("coba") || 
+            text.Contains("sehat") || text.Contains("pulih") || text.Contains("untunglah"))
+        {
+            return "happy"; 
+        }
+
+        if (text.Contains("sedih") || text.Contains("sayang") || text.Contains("meninggal") || 
+            text.Contains("kasihan") || text.Contains("khawatir") || text.Contains("cemas") || 
+            text.Contains("takut") || text.Contains("maaf"))
+        {
+            return "sad"; 
+        }
+
+        return "normal";
+    }
+
+    private string GetCharacterFolderName(string speakerName)
+    {
+        if (string.IsNullOrEmpty(speakerName)) return null;
+        string name = speakerName.ToLower();
+        if (name.Contains("robby") || name.Contains("mc") || name.Contains("player")) return "Robby";
+        if (name.Contains("nenek")) return "Nenek";
+        if (name.Contains("nisa")) return "Nisa";
+        if (name.Contains("bahri")) return "Pak Bahri";
+        if (name.Contains("darsono") || name.Contains("kades") || name.Contains("kepala desa")) return "Pak Darsono";
+        if (name.Contains("darma")) return "Pak Darma";
+        if (name.Contains("seno")) return "Pak Seno";
+        if (name.Contains("ratri")) return "Ratri";
+        if (name.Contains("sekar")) return "Sekar";
+        if (name.Contains("laras")) return "Laras";
+        return null;
+    }
+
+    private Sprite GetDynamicSprite(string folderName, string emotion)
+    {
+#if UNITY_EDITOR
+        string baseDir = "Assets/Art/DialogPortraits/" + folderName + "/";
+        string fullDirPath = Path.Combine(System.IO.Directory.GetCurrentDirectory(), baseDir);
+        
+        if (System.IO.Directory.Exists(fullDirPath))
+        {
+            string[] files = System.IO.Directory.GetFiles(fullDirPath, "*", System.IO.SearchOption.TopDirectoryOnly);
+            
+            // 1. Cari file gambar yang cocok dengan kata kunci emosi spesifik
+            foreach (var f in files)
+            {
+                string filename = Path.GetFileName(f).ToLower();
+                if (filename.EndsWith(".meta")) continue;
+                
+                string ext = Path.GetExtension(f).ToLower();
+                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
+
+                if (emotion == "happy" && (filename.Contains("happy") || filename.Contains("cheer") || filename.Contains("rel")))
+                {
+                    string assetPath = baseDir + Path.GetFileName(f);
+                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+                }
+                if (emotion == "sad" && (filename.Contains("sad") || filename.Contains("sick") || filename.Contains("worr") || filename.Contains("bagging")))
+                {
+                    string assetPath = baseDir + Path.GetFileName(f);
+                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+                }
+                if (emotion == "shock" && (filename.Contains("shock") || filename.Contains("blush") || filename.Contains("kaget")))
+                {
+                    string assetPath = baseDir + Path.GetFileName(f);
+                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+                }
+            }
+
+            // 2. Jika tidak ditemukan emosi spesifik, cari file netral/normal
+            foreach (var f in files)
+            {
+                string filename = Path.GetFileName(f).ToLower();
+                if (filename.EndsWith(".meta")) continue;
+
+                string ext = Path.GetExtension(f).ToLower();
+                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
+
+                if (filename.Contains("netral") || filename.Contains("normal") || filename.Contains("default"))
+                {
+                    string assetPath = baseDir + Path.GetFileName(f);
+                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+                }
+            }
+
+            // 3. Fallback terakhir: gunakan file gambar pertama yang valid dalam folder
+            foreach (var f in files)
+            {
+                string filename = Path.GetFileName(f).ToLower();
+                if (filename.EndsWith(".meta")) continue;
+
+                string ext = Path.GetExtension(f).ToLower();
+                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
+
+                string assetPath = baseDir + Path.GetFileName(f);
+                return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+            }
+        }
+#endif
+        return null;
     }
 
     private void SetPortrait(Image img, Sprite sprite, bool isActive)
@@ -242,7 +435,33 @@ public class DialogManager : MonoBehaviour
         }
 
         img.sprite = sprite;
-        img.color  = isActive ? activePortraitColor : inactivePortraitColor;
+        // Jika aktif, gunakan activePortraitColor (terang).
+        // Jika diam (siluet), gunakan silhouetteColor (sangat gelap/hitam) agar tidak kelihatan warna aslinya dan presisi posisinya.
+        img.color  = isActive ? activePortraitColor : silhouetteColor;
+
+        // Atur tinggi dasar agar ukuran visual Robby (lanskap) dan NPC seimbang
+        float targetHeight = 300f;
+        float sizeMultiplier = 1f;
+        string spriteName = sprite.name.ToLower();
+        if (!spriteName.Contains("mc") && !spriteName.Contains("robby") && !spriteName.Contains("player"))
+        {
+            sizeMultiplier = 0.95f; // Semua NPC di-scale agar seimbang terhadap padding Robby
+        }
+        
+        float aspect = sprite.rect.width / sprite.rect.height;
+        float finalHeight = targetHeight * sizeMultiplier;
+        img.rectTransform.sizeDelta = new Vector2(finalHeight * aspect, finalHeight);
+
+        // Geser ke pinggiran (leftPortrait digeser ke kiri/negatif, rightPortrait digeser ke kanan/positif)
+        if (img == leftPortrait)
+        {
+            img.rectTransform.anchoredPosition = new Vector2(-120f, 0f);
+        }
+        else if (img == rightPortrait)
+        {
+            img.rectTransform.anchoredPosition = new Vector2(120f, 0f);
+        }
+
         img.gameObject.SetActive(true);
     }
 

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Jamu Kunyit
   m_EditorClassIdentifier: Assembly-CSharp::InventoryItem
   itemName: Jamu Kunyit
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 536e79026490eb841bd57cec424bbb58, type: 3}
   description: Jamu kunyit segar, menyehatkan badan.
   itemType: 2

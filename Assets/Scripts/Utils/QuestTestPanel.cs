@@ -48,17 +48,14 @@ public class QuestTestPanel : MonoBehaviour
 
     void OnGUI()
     {
-        // Tombol kecil toggle di kiri atas agar tidak mengganggu UI utama
-        if (GUI.Button(new Rect(10, 10, 120, 25), showPanel ? "Close Cheat (F10)" : "Cheat Panel (F10)"))
-        {
-            showPanel = !showPanel;
-            if (!showPanel)
-            {
-                RestoreCursor();
-            }
-        }
-
         if (!showPanel) return;
+
+        // Tombol kecil toggle di kiri atas agar tidak mengganggu UI utama
+        if (GUI.Button(new Rect(10, 10, 120, 25), "Close Cheat (F10)"))
+        {
+            showPanel = false;
+            RestoreCursor();
+        }
 
         // Unlock cursor saat panel terbuka agar mudah diklik
         Cursor.lockState = CursorLockMode.None;
@@ -73,7 +70,8 @@ public class QuestTestPanel : MonoBehaviour
 
         GUILayout.Label("=== JUMP CHAPTER ===", GUILayout.ExpandWidth(true));
 
-        if (GUILayout.Button("Prolog: Bicara Nenek (Step 0)")) JumpToStep(0);
+        if (GUILayout.Button("Prolog: Gerak WASD (Step 0)")) JumpToStep(0);
+        if (GUILayout.Button("Prolog: Bicara Nenek (Step 1)")) JumpToStep(1);
         if (GUILayout.Button("Prolog: Cangkul Kebun (Step 2)")) JumpToStep(2);
         if (GUILayout.Button("Prolog: Masak Jamu (Step 6)")) JumpToStep(6);
         if (GUILayout.Button("Ch 1: Bicara Laras (Step 8)")) JumpToStep(8);

@@ -26,6 +26,8 @@ public class GardenPlot : MonoBehaviour
 
     /// <summary>Event global: dipanggil saat ADA tanaman ditanam (membawa plantName) — untuk tutorial/quest.</summary>
     public static event System.Action<string> OnAnyPlanted;
+    /// <summary>Event global: dipanggil saat ADA plot tanah dicangkul — untuk tutorial/quest.</summary>
+    public static event System.Action OnAnyHoed;
     /// <summary>Event global: dipanggil saat ADA panen (membawa nama item hasil) — untuk tutorial/quest.</summary>
     public static event System.Action<string> OnAnyHarvested;
 
@@ -208,6 +210,7 @@ public class GardenPlot : MonoBehaviour
         SetState(PlotState.Hoed);
         PaintTerrainLayer(soilLayerIndex);
         Debug.Log($"[GardenPlot] {name}: Tanah dicangkul!");
+        OnAnyHoed?.Invoke();
 
         isHoeing = false;
     }

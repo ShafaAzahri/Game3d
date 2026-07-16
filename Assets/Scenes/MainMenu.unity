@@ -813,7 +813,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
   newGameButton: {fileID: 1175692802}
-  continueButton: {fileID: 0}
+  continueButton: {fileID: 671292283}
   quitButton: {fileID: 897714935}
   gameplayScene: Dunia
   cutsceneScene: Cutscene
