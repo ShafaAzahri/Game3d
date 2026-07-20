@@ -816,7 +816,7 @@ MonoBehaviour:
   continueButton: {fileID: 671292283}
   quitButton: {fileID: 897714935}
   gameplayScene: Dunia
-  cutsceneScene: Cutscene
+  cutsceneScene: 
   slot: 0
   bgmClip: {fileID: 8300000, guid: 1c013503ed64cd44080a256810e4ac26, type: 3}
   clickSFX: {fileID: 8300000, guid: 0dd3180a252ef7c44aa2ba693bd934a9, type: 3}

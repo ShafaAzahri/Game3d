@@ -24,7 +24,7 @@ public class MainMenuManager : MonoBehaviour
     public string gameplayScene = "Dunia";
 
     [Tooltip("Scene cutscene yang diputar saat New Game (sebelum gameplay). Kosongkan untuk langsung ke gameplay.")]
-    public string cutsceneScene = "Cutscene";
+    public string cutsceneScene = "";
 
     [Tooltip("Slot save yang dipakai (1 slot = 0).")]
     public int slot = 0;

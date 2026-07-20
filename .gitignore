@@ -112,6 +112,13 @@ InitTestScene*.unity*
 /.agent/
 /.agents/
 
+# Claude AI IDE
+/.claude/
+
+# Opencode AI IDE
+/.opencode/
+/opencode.json
+
 # Kilocode AI IDE
 /.kilocode/
 

@@ -6290,6 +6290,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Nenek
     itemNeeded: 
@@ -6300,6 +6304,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 1
     param: 
     itemNeeded: 
@@ -6310,6 +6318,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Nenek
     itemNeeded: 
@@ -6320,6 +6332,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 3
     param: 
     itemNeeded: 
@@ -6330,6 +6346,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 4
     param: 
     itemNeeded: 
@@ -6340,6 +6360,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 7
     param: Jamu Jahe
     itemNeeded: 
@@ -6350,6 +6374,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 8
     param: Nenek
     itemNeeded: Jamu Jahe
@@ -6360,6 +6388,10 @@ MonoBehaviour:
     rewardMessage: "Prolog selesai! +500G \u2022 Resep baru terbuka."
     rewardTitle: REWARD PROLOG
     rewardGold: 500
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Laras
     itemNeeded: 
@@ -6370,6 +6402,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 100
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Darma
     itemNeeded: 
@@ -6380,6 +6416,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 4
     param: 
     itemNeeded: 
@@ -6390,6 +6430,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Nisa
     itemNeeded: 
@@ -6400,6 +6444,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 50
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 7
     param: Jamu Pegal Linu
     itemNeeded: 
@@ -6410,6 +6458,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 8
     param: Darma
     itemNeeded: Jamu Pegal Linu
@@ -6420,6 +6472,10 @@ MonoBehaviour:
     rewardMessage: "Chapter 1 selesai! +300G \u2022 Resep Lv.2 terbuka."
     rewardTitle: REWARD CHAPTER 1
     rewardGold: 300
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 9
     param: heal3
     itemNeeded: 
@@ -6430,6 +6486,10 @@ MonoBehaviour:
     rewardMessage: "Semua warga sembuh! +500G \u2022 Resep pamungkas terbuka."
     rewardTitle: REWARD CHAPTER 2
     rewardGold: 500
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Ratri
     itemNeeded: 
@@ -6440,6 +6500,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Laras
     itemNeeded: 
@@ -6450,6 +6514,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 2
     param: Nisa
     itemNeeded: 
@@ -6460,6 +6528,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   - type: 10
     param: pacar
     itemNeeded: 
@@ -6470,6 +6542,10 @@ MonoBehaviour:
     rewardMessage: 
     rewardTitle: 
     rewardGold: 0
+    rewardItemName1: 
+    rewardItemAmount1: 0
+    rewardItemName2: 
+    rewardItemAmount2: 0
   objectivePanel: {fileID: 954692768}
   objectiveText: {fileID: 1485928097}
   subText: {fileID: 716049886}
@@ -16758,6 +16834,53 @@ MeshCollider:
   m_Convex: 1
   m_CookingOptions: 30
   m_Mesh: {fileID: -4284182221599607849, guid: b223f05f3a3554044b21184a30febb0b, type: 3}
+--- !u!1 &1058207809
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1058207811}
+  - component: {fileID: 1058207810}
+  m_Layer: 0
+  m_Name: BGMManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1058207810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058207809}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 774ea5992e9998446a4effc6cfeb618c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SceneBGM
+  bgmName: lagu untuk scene dunia
+  volume: 0.4
+  loop: 1
+--- !u!4 &1058207811
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1058207809}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1059159886
 GameObject:
   m_ObjectHideFlags: 0
@@ -21186,6 +21309,53 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: -3985073465685849670, guid: 33b68772460d8634ba9c9add87e6b69c, type: 3}
   m_PrefabInstance: {fileID: 5361836022019572333}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1355437826
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1355437828}
+  - component: {fileID: 1355437827}
+  m_Layer: 0
+  m_Name: DuniaVideoCutscenePlayer
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1355437827
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1355437826}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f3f86a716cd7af04196a9697345f2250, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DuniaVideoCutscenePlayer
+  videoPlayer: {fileID: 0}
+  cutsceneClip: {fileID: 32900000, guid: 062b8c1e6090cef4ab5c45ba2d88e2e8, type: 3}
+  skipHint: {fileID: 0}
+--- !u!4 &1355437828
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1355437826}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!4 &1360161984 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: a3b7877267bda6641a63172f0567d52c, type: 3}
@@ -23989,6 +24159,7 @@ MonoBehaviour:
   rightPortrait: {fileID: 1622699845}
   activePortraitColor: {r: 1, g: 1, b: 1, a: 1}
   inactivePortraitColor: {r: 0.35, g: 0.35, b: 0.4, a: 1}
+  silhouetteColor: {r: 0.08, g: 0.08, b: 0.1, a: 1}
   typewriterSpeed: 0.03
   npcNameColor: {r: 0.95, g: 0.82, b: 0.38, a: 1}
   playerNameColor: {r: 0.5, g: 0.85, b: 1, a: 1}
@@ -40866,3 +41037,5 @@ SceneRoots:
   - {fileID: 537166570}
   - {fileID: 472243799}
   - {fileID: 407759375}
+  - {fileID: 1058207811}
+  - {fileID: 1355437828}

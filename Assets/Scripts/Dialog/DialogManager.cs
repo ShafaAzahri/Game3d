@@ -356,71 +356,83 @@ public class DialogManager : MonoBehaviour
 
     private Sprite GetDynamicSprite(string folderName, string emotion)
     {
-#if UNITY_EDITOR
-        string baseDir = "Assets/Art/DialogPortraits/" + folderName + "/";
-        string fullDirPath = Path.Combine(System.IO.Directory.GetCurrentDirectory(), baseDir);
+        // Path in Resources: e.g. "DialogPortraits/Laras/"
+        string resourceDir = "DialogPortraits/" + folderName + "/";
         
-        if (System.IO.Directory.Exists(fullDirPath))
+        var candidates = new System.Collections.Generic.List<string>();
+        string charLower = folderName.ToLower();
+        string emotLower = emotion != null ? emotion.ToLower() : "";
+
+        // 1. Cari file gambar yang cocok dengan kata kunci emosi spesifik
+        if (emotLower == "happy" || emotLower == "senang")
         {
-            string[] files = System.IO.Directory.GetFiles(fullDirPath, "*", System.IO.SearchOption.TopDirectoryOnly);
-            
-            // 1. Cari file gambar yang cocok dengan kata kunci emosi spesifik
-            foreach (var f in files)
+            if (charLower == "robby") { candidates.Add("mc happy pose"); }
+            else if (charLower == "nenek") { candidates.Add("nenek happy pose"); }
+            else if (charLower == "pak darma") { candidates.Add("pak darma_healthy_happy"); }
+            else
             {
-                string filename = Path.GetFileName(f).ToLower();
-                if (filename.EndsWith(".meta")) continue;
-                
-                string ext = Path.GetExtension(f).ToLower();
-                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
-
-                if (emotion == "happy" && (filename.Contains("happy") || filename.Contains("cheer") || filename.Contains("rel")))
-                {
-                    string assetPath = baseDir + Path.GetFileName(f);
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-                }
-                if (emotion == "sad" && (filename.Contains("sad") || filename.Contains("sick") || filename.Contains("worr") || filename.Contains("bagging")))
-                {
-                    string assetPath = baseDir + Path.GetFileName(f);
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-                }
-                if (emotion == "shock" && (filename.Contains("shock") || filename.Contains("blush") || filename.Contains("kaget")))
-                {
-                    string assetPath = baseDir + Path.GetFileName(f);
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-                }
-            }
-
-            // 2. Jika tidak ditemukan emosi spesifik, cari file netral/normal
-            foreach (var f in files)
-            {
-                string filename = Path.GetFileName(f).ToLower();
-                if (filename.EndsWith(".meta")) continue;
-
-                string ext = Path.GetExtension(f).ToLower();
-                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
-
-                if (filename.Contains("netral") || filename.Contains("normal") || filename.Contains("default"))
-                {
-                    string assetPath = baseDir + Path.GetFileName(f);
-                    return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
-                }
-            }
-
-            // 3. Fallback terakhir: gunakan file gambar pertama yang valid dalam folder
-            foreach (var f in files)
-            {
-                string filename = Path.GetFileName(f).ToLower();
-                if (filename.EndsWith(".meta")) continue;
-
-                string ext = Path.GetExtension(f).ToLower();
-                if (ext != ".png" && ext != ".jpg" && ext != ".jpeg" && ext != ".tga") continue;
-
-                string assetPath = baseDir + Path.GetFileName(f);
-                return UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>(assetPath);
+                candidates.Add(charLower + "_happy");
+                candidates.Add(charLower + "_cheerfull");
+                candidates.Add(charLower + "_rellived");
             }
         }
-#endif
-        return null;
+        else if (emotLower == "sad" || emotLower == "sedih" || emotLower == "sick" || emotLower == "sakit")
+        {
+            if (charLower == "robby") { candidates.Add("mc sad pose"); }
+            else if (charLower == "nenek") { candidates.Add("nenek sad pose"); candidates.Add("nenek bagging"); }
+            else
+            {
+                candidates.Add(charLower + "_sick");
+                candidates.Add(charLower + "_worried");
+                candidates.Add(charLower + "_sad");
+            }
+        }
+        else if (emotLower == "shock" || emotLower == "kaget" || emotLower == "blush")
+        {
+            if (charLower == "robby") { candidates.Add("mc shock pose"); }
+            else
+            {
+                candidates.Add(charLower + "_blushing");
+                candidates.Add(charLower + "_shock");
+            }
+        }
+
+        // Selalu tambahkan nama emosi mentah sebagai kandidat
+        candidates.Add(charLower + "_" + emotion);
+        candidates.Add(charLower + "_" + emotLower);
+        candidates.Add(emotion);
+        candidates.Add(emotLower);
+
+        // Coba load kandidat secara berurutan
+        foreach (var c in candidates)
+        {
+            Sprite s = Resources.Load<Sprite>(resourceDir + c);
+            if (s != null) return s;
+        }
+
+        // 2. Jika tidak ditemukan emosi spesifik, cari netral/normal
+        var neutralCandidates = new System.Collections.Generic.List<string>();
+        if (charLower == "robby") { neutralCandidates.Add("mc normal pose"); }
+        else if (charLower == "nenek") { neutralCandidates.Add("nenek normal pose"); }
+        else
+        {
+            neutralCandidates.Add(charLower + "_netral");
+            neutralCandidates.Add(charLower + "_normal");
+            neutralCandidates.Add(charLower + "_default");
+        }
+
+        foreach (var c in neutralCandidates)
+        {
+            Sprite s = Resources.Load<Sprite>(resourceDir + c);
+            if (s != null) return s;
+        }
+
+        // 3. Fallback terakhir: coba nama berkas siluet atau default lain
+        if (charLower == "nenek") return Resources.Load<Sprite>(resourceDir + "siluet nenek");
+        if (charLower == "robby") return Resources.Load<Sprite>(resourceDir + "siluet mc");
+
+        // Coba memuat nama file apa saja secara langsung jika emosinya adalah nama file itu sendiri
+        return Resources.Load<Sprite>(resourceDir + emotion);
     }
 
     private void SetPortrait(Image img, Sprite sprite, bool isActive)

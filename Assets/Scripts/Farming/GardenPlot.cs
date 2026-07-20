@@ -477,7 +477,17 @@ public class GardenPlot : MonoBehaviour
         if (GameManager.Instance == null) return;
 
         var ps = GameManager.Instance.Data.plots.Find(p => p.plotId == gameObject.name);
-        if (ps == null) return; // belum ada data → tetap Empty (New Game bersih)
+        if (ps == null)
+        {
+            // Belum ada data / New Game bersih -> tetap Empty dan cat rumput
+            currentState = PlotState.Empty;
+            currentPlant = null;
+            growTimer = 0f;
+            if (spawnedPlant != null) { Destroy(spawnedPlant); spawnedPlant = null; }
+            PaintTerrainLayer(grassLayerIndex);
+            if (playerInRange) UpdatePrompt();
+            return;
+        }
 
         // Restore tanaman dari nama
         currentPlant = null;
@@ -499,6 +509,8 @@ public class GardenPlot : MonoBehaviour
         // Repaint tanah jika sudah dicangkul
         if (currentState >= PlotState.Hoed)
             PaintTerrainLayer(soilLayerIndex);
+        else
+            PaintTerrainLayer(grassLayerIndex);
 
         // Spawn prefab jika sudah siap panen
         if (spawnedPlant != null) { Destroy(spawnedPlant); spawnedPlant = null; }
